@@ -1,0 +1,37 @@
+{
+    "questions": [
+        {
+            "source": "SHSAT 2020 Sample Test A",
+            "questionText": "For what value of \\(x\\) is the below equation true? $${x\\over 5} - 4 = 3(4 - 2x) - 1$$",
+            "tags": ["equations", "pemdas"],
+            "choices": [
+                "\\(75\\over 11\\)",
+                "\\(75\\over 31\\)",
+                "\\(15\\over 7\\)",
+                "\\(65\\over 31\\)"
+            ],
+            "answer": "\\(75\\over 31\\)",
+            "hint": "There is something to be gained here.",
+            "explanation": "",
+            "description": "",
+            "difficulty": "2"
+        },
+        {
+            "difficulty": null,
+            "answer": "8",
+            "questionText": "When 368 is divided by 7, the remainder is $x$. What is the remainder when 368 is divided by \\(3x\\)?",
+            "choices": "[0, 3, 5, 8]",
+            "tags": ["tricky", "word_problem"],
+            "type": "CustomEntity01"
+        },
+        {
+            "difficulty": null,
+            "hint": null,
+            "answer": "20",
+            "questionText": "The average (arithmetic mean) of 16 numbers is 3. The average of these 16 numbers and a seventeenth number is 4. What is the seventeenth number?",
+            "choices": "[12, 17, 18, 20]",
+            "tags": ["mean_median", "tricky"],
+            "type": "CustomEntity01"
+        }
+    ]
+}
