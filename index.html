@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
+    <!-- Begin head -->
+    <head>
+        <!-- Meta tags -->
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        />
+
+        <!-- Page Title -->
+        <title>SHSAT Prep =&gt; by Ben Willenbring</title>
+
+        <!-- Favicon -->
+        <link
+            rel="shortcut icon"
+            type="image/x-icon"
+            href="https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/1574135706821-F3V6FTE62LDEJ1I6B7B8/ke17ZwdGBToddI8pDm48kLxnK526YWAH1qleWz-y7AFZw-zPPgdn4jUwVcJE1ZvWEtT5uBSRWt4vQZAgTJucoTqqXjS3CfNDSuuf31e0tVFUQAah1E2d0qOFNma4CJuw0VgyloEfPuSsyFRoaaKT76QvevUbj177dmcMs1F0H-0/favicon.ico?format=100w"
+        />
+
+        <!-- Vue and vue-loader (production versions) -->
+        <script src="https://unpkg.com/vue@3.2.37/dist/vue.global.prod.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader/dist/vue3-sfc-loader.js"></script>
+        <script>
+            var MathJax = {
+                tex: {
+                    inlineMath: [
+                        ['$', '$'],
+                        ['\\(', '\\)'],
+                    ],
+                },
+            }
+        </script>
+    </head>
+
+    <!-- HTML BODY -->
+    <body>
+        <div id="app"></div>
+
+        <!-- SHSAT App embed js -->
+        <script>
+            const options = {
+                moduleCache: {
+                    vue: Vue,
+                },
+                async getFile(url) {
+                    const res = await fetch(url)
+                    if (!res.ok)
+                        throw Object.assign(
+                            new Error(res.statusText + ' ' + url),
+                            { res }
+                        )
+                    return {
+                        getContentData: (asBinary) =>
+                            asBinary ? res.arrayBuffer() : res.text(),
+                    }
+                },
+                addStyle(textContent) {
+                    const style = Object.assign(
+                        document.createElement('style'),
+                        {
+                            textContent,
+                        }
+                    )
+                    const ref =
+                        document.head.getElementsByTagName('style')[0] || null
+                    document.head.insertBefore(style, ref)
+                },
+            }
+
+            const { loadModule } = window['vue3-sfc-loader']
+
+            // Questions URI
+            let questionsURI = `./questions/monday.json?t=${new Date().getTime()}`
+
+            // Questions Array
+            let q = [
+                {
+                    questionText: 'What is the meaning of \\(x = 55\\) life?',
+                    choices: ['True', 'False'],
+                    answer: 'True',
+                },
+                {
+                    questionText: 'How many things are here?',
+                    choices: [5, 6, 7],
+                    answer: 5,
+                },
+            ]
+
+            q = JSON.stringify(q)
+
+            const app = Vue.createApp({
+                components: {
+                    shsat: Vue.defineAsyncComponent(() =>
+                        loadModule('./components/Ben.vue', options)
+                    ),
+                },
+                template: `<shsat questionsURI='${questionsURI}'></shsat>`,
+            })
+
+            app.mount('#app')
+        </script>
+    </body>
+</html>
