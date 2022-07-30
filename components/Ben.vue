@@ -331,7 +331,7 @@ export default Ben
     <div
         id="outerShell"
         v-show="loaded"
-        class="container border border-4 border-secondary p-4 questionContainer theme_bronx"
+        class="row border border-4 border-secondary p-4 questionContainer theme_bronx"
     >
         <div class="display-4 d-none header">
             Total Questions:
