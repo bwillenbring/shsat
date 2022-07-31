@@ -71,24 +71,38 @@
 
             const { loadModule } = window['vue3-sfc-loader']
 
-            // Questions URI
-            let questionsURI = `./questions/monday.json?t=${new Date().getTime()}`
+            // --------------------------------------------------
+            // 3 ways of passing in questions
+            // --------------------------------------------------
 
-            // Questions Array
-            let q = [
-                {
-                    questionText: 'What is the meaning of \\(x = 55\\) life?',
-                    choices: ['True', 'False'],
-                    answer: 'True',
-                },
-                {
-                    questionText: 'How many things are here?',
-                    choices: [5, 6, 7],
-                    answer: 5,
-                },
-            ]
+            // Method 1: Pass it in as a string prop
+            // let questionsURL = `./questions/monday.json?t=${new Date().getTime()}`
+            // template: `<shsat questionsURL='${questionsURL}'></shsat>`,
 
-            q = JSON.stringify(q)
+            // --------------------------------------------------
+
+            // Method 2: Pass it in as part of the querystring in the URL
+            // {base url}/?quiz=./questions/monday.json or... {base url}/?quiz=./questions/monday
+            // template: `<shsat></shsat>`,
+
+            // --------------------------------------------------
+
+            // Method 3: Pass it in as a stringified array of questions
+            // const q = JSON.stringify([
+            //     {
+            //         questionText: 'What is the meaning of \\(x = 55\\) life?',
+            //         choices: ['True', 'False'],
+            //         answer: 'True',
+            //     },
+            //     {
+            //         questionText: 'How many legs does a rhino have?',
+            //         choices: [3, 6, 4],
+            //         answer: 3,
+            //     },
+            // ])
+            // template: `<shsat questionsArray='${q}'></shsat>`,
+
+            // --------------------------------------------------
 
             const app = Vue.createApp({
                 components: {
@@ -96,7 +110,7 @@
                         loadModule('./components/Ben.vue', options)
                     ),
                 },
-                template: `<shsat questionsURI='${questionsURI}'></shsat>`,
+                template: `<shsat></shsat>`,
             })
 
             app.mount('#app')

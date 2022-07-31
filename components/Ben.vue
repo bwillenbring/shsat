@@ -1,7 +1,7 @@
 <script>
 const Ben = {
     props: {
-        questionsURI: {
+        questionsURL: {
             type: String,
             default: null,
         },
@@ -12,6 +12,15 @@ const Ben = {
             count: 0,
             loaded: false,
             questions: [],
+            defaultQuestions: [
+                {
+                    questionText:
+                        'If $x = -1$, what does $(x+1)^2$ evaluate to?',
+                    choices: [0, 1, 2, 3],
+                    answer: 0,
+                    tags: ['sample'],
+                },
+            ],
             questionText: null,
             hintText: null,
             choices: [],
@@ -106,6 +115,22 @@ const Ben = {
         },
     },
     methods: {
+        getQuestionsFromParams(param = 'quiz') {
+            try {
+                // This method parses the querystring
+                let jsonFile = new URLSearchParams(window.location.search).get(
+                    param
+                )
+                jsonFile = jsonFile.endsWith('.json')
+                    ? jsonFile
+                    : `${jsonFile}.json`
+                return jsonFile
+            } catch (err) {
+                return null
+            }
+
+            return null
+        },
         formatChoices(choices) {
             let formattedChoices = []
             // we don't know if choices = string, array, or something else
@@ -193,12 +218,22 @@ const Ben = {
 
             // this.displayQuestion(idx)
         },
-        renderMath() {
+        renderMath(attempts = 1) {
+            attempts++
             try {
                 MathJax.typeset()
             } catch (err) {
-                console.log('Could not render math')
-                console.log(err)
+                if (attempts < 3) {
+                    console.log('Re-rendering math...')
+                    const THIS = this
+                    const fn = () => THIS.renderMath(attempts)
+                    setTimeout(fn, 500)
+                } else {
+                    console.log(
+                        `Could not render math after ${attempts} attemps`
+                    )
+                    console.log(err)
+                }
             }
         },
         displayQuestion(idx) {
@@ -223,19 +258,31 @@ const Ben = {
             }
         },
         async loadQuestions() {
-            if (!!this.questionsArray) {
-                // The props demand that you use this array
-                let questionsArray =
-                    typeof this.questionsArray === 'string'
-                        ? eval(this.questionsArray)
-                        : this.questionsArray
+            /**
+             * 3 Scenarios
+             *    1. questions are passed as params. Example...
+             *      {base url}?questions=questions=[{"questionText": "Ben"}]
+             *
+             *    2. questions are passed in as a string via props...
+             *      let q = JSON.stringify([{"questionText": "Ben"}])
+             *      template: `<shsat questionsArray='${q}'></shsat>`
+             *
+             *    3. questions are passed in as a string to an URL
+             *      template: `<shsat questionsURL='${questionsURL}'></shsat>`
+             */
+            let questionsAsParams = this.getQuestionsFromParams()
+            if (this.questionsURL || questionsAsParams) {
+                // Favor this.questionsURL (prop) over questionsAsParams (querystring)
+                let q_url = this.questionsURL
+                    ? this.questionsURL
+                    : questionsAsParams
+                q_url = `${q_url}?t=${new Date().getTime()}`
 
-                this.setQuestions(questionsArray)
-            } else if (this.questionsURI) {
+                const sep = '❤️ '.repeat(25)
+                this.log('Loading questions...!')
+
                 try {
-                    const r = await axios.get(
-                        `${this.questionsURI}?t=${new Date().getTime()}`
-                    )
+                    const r = await axios.get(`${q_url}`)
 
                     // Questions are presumed to be... { "questions": [ ... an array of questions... ] }
                     const questions =
@@ -247,12 +294,23 @@ const Ben = {
                 } catch (err) {
                     console.log(err)
                 }
+            } else if (this.questionsArray) {
+                // questionsArray is a prop passed in as a stringified Array of questions
+                let questionsArray =
+                    typeof this.questionsArray === 'string'
+                        ? eval(this.questionsArray)
+                        : this.questionsArray
+
+                this.setQuestions(questionsArray)
             } else {
-                console.log(`😢 No questions specified!`)
+                this.log(`😢 Using default questions!`)
+                // Use the default questions
+                let d = JSON.parse(JSON.stringify(this.defaultQuestions))
+                this.setQuestions(d)
             }
         },
         log(msg) {
-            let sep = '❤️'.repeat(20)
+            let sep = '❤️ '.repeat(25)
             console.log(sep)
             console.log(msg)
             console.log(sep)
