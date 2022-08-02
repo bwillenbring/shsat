@@ -13,6 +13,9 @@ const Ben = {
     },
     data() {
         return {
+            isMobile: false,
+            w: window.innerWidth,
+            h: window.innerHeight,
             wrong: 0,
             right: 0,
             unanswered: 0,
@@ -38,6 +41,8 @@ const Ben = {
             tags: [],
             currentQuestion: {},
             currentlySelectedChoice: null,
+            blurb_app: `A free demo for parents and kids to try out.`,
+            blurb_ben: `A NYC dad whose twin daughters attend Hunter college HS and Brooklyn Tech.`,
         }
     },
     computed: {
@@ -55,6 +60,9 @@ const Ben = {
         },
     },
     mounted() {
+        // Detect if
+        this.detectMobile()
+        window.addEventListener('resize', this.detectMobile)
         let [jq, bs, bs_with_popper, popper, math1, math2, ax] = [
             'https://code.jquery.com/jquery-3.6.0.min.js',
             'https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css',
@@ -85,7 +93,6 @@ const Ben = {
             const tooltipList = [...tooltipTriggerList].map(
                 (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
             )
-            console.log('popper!!!!!')
         }
         setTimeout(fn_popper, 500)
 
@@ -148,6 +155,39 @@ const Ben = {
         },
     },
     methods: {
+        detectMobile() {
+            let [w, h] = [window.innerWidth, window.innerHeight]
+            let r = new RegExp(
+                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+            )
+
+            let m = r.test(navigator.userAgent)
+            this.isMobile = m
+            this.w = w
+            this.h = h
+            return
+        },
+        getBlurb(b) {
+            switch (b) {
+                case 'ben':
+                case 'author':
+                    // about me
+                    return {
+                        link: 'https://www.ben-willenbring.com/about',
+                        html: `${this.blurb_ben} Click to learn more.`,
+                    }
+                    break
+
+                case 'app':
+                case 'demo':
+                    // app
+                    return {
+                        link: 'https://www.ben-willenbring.com/shsat-back-story',
+                        html: `${this.blurb_app} Click to learn more.`,
+                    }
+                    break
+            }
+        },
         enableTooltips() {
             // Code here
             const tooltipTriggerList = document.querySelectorAll(
@@ -164,9 +204,13 @@ const Ben = {
                 let jsonFile = new URLSearchParams(window.location.search).get(
                     param
                 )
-                jsonFile = jsonFile.endsWith('.json')
-                    ? jsonFile
-                    : `${jsonFile}.json`
+                // It's being pulled from a remote url or locally
+                if (jsonFile.startsWith('http') || jsonFile.endsWith('.json')) {
+                    jsonFile = jsonFile
+                } else {
+                    jsonFile = `${jsonFile}.json`
+                }
+
                 return jsonFile
             } catch (err) {
                 return null
@@ -506,221 +550,256 @@ export default Ben
 
 <template ref="foo">
     <!-- outer shell -->
-    <div
-        id="outerShell"
-        v-show="loaded"
-        class="row m-1 border border-4 border-secondary p-4 questionContainer theme_brooklyn"
-    >
-        <!-- <div class="display-4 d-none header">
-            Total Questions:
-            <span class="badge rounded-pill text-bg-ben">{{
-                questions.length
-            }}</span>
-        </div> -->
+    <div class="d-flex justify-content-center">
+        <div
+            id="outerShell"
+            v-show="loaded"
+            class="row m-1 border border-4 border-secondary theme_brooklyn"
+        >
+            <!-- Testing display resolutions -->
+            <div class="d-none"><b>Dimensions</b> {{ w }} x {{ h }}</div>
 
-        <!-- Question Container  -->
-        <div data-role="question-container" class="container p-0 bg-light">
-            <div data-role="question" :data-test="currentQuestionNumber">
-                <!-- Question Text (allow setting html) -->
-                <div
-                    class="h4"
-                    data-role="questionText"
-                    v-html="questionText"
-                ></div>
+            <!-- Question Container  -->
+            <div data-role="question-container" class="container p-0">
+                <div data-role="question" :data-test="currentQuestionNumber">
+                    <!-- Question Text (allow setting html) -->
+                    <div
+                        class="h4"
+                        data-role="questionText"
+                        v-html="questionText"
+                    ></div>
 
-                <!-- Choices -->
-                <div data-role="choices" class="container-fluid">
-                    <div>
-                        <ol
-                            class="choices"
-                            v-if="choices.length && choices.length > 0"
-                        >
-                            <li
-                                @click="
-                                    selectChoice(
-                                        currentQuestion.values[
-                                            choices.indexOf(c)
-                                        ]
-                                    )
-                                "
-                                :class="
-                                    c ==
-                                    getSelectionForQuestion(currentQuestion.idx)
-                                        ? 'choice selected'
-                                        : 'choice'
-                                "
-                                v-for="c in choices"
-                                :key="choices.indexOf(c)"
+                    <!-- Choices -->
+                    <div data-role="choices" class="container-fluid">
+                        <div>
+                            <ol
+                                class="choices"
+                                v-if="choices.length && choices.length > 0"
                             >
-                                <span
-                                    :data-question-idx="currentQuestionNumber"
-                                    :data-choice-idx="choices.indexOf(c)"
-                                    :data-value="
-                                        currentQuestion.values[
-                                            choices.indexOf(c)
-                                        ]
+                                <li
+                                    @click="
+                                        selectChoice(
+                                            currentQuestion.values[
+                                                choices.indexOf(c)
+                                            ]
+                                        )
                                     "
-                                    class="choice"
-                                    >{{ c }}</span
+                                    :class="
+                                        c ==
+                                        getSelectionForQuestion(
+                                            currentQuestion.idx
+                                        )
+                                            ? 'choice selected'
+                                            : 'choice'
+                                    "
+                                    v-for="c in choices"
+                                    :key="choices.indexOf(c)"
                                 >
-                            </li>
-                        </ol>
+                                    <span
+                                        :data-question-idx="
+                                            currentQuestionNumber
+                                        "
+                                        :data-choice-idx="choices.indexOf(c)"
+                                        :data-value="
+                                            currentQuestion.values[
+                                                choices.indexOf(c)
+                                            ]
+                                        "
+                                        class="choice"
+                                        >{{ c }}</span
+                                    >
+                                </li>
+                            </ol>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Hint & Tags -->
-                <div data-role="hintsAndTags" class="position-relative">
-                    <!-- Hint Container -->
-                    <div
-                        data-role="hint-container"
-                        v-if="hintText"
-                        class="d-inline-block"
-                    >
-                        <span>❤️ <b>Hint:</b></span>
-                        <span class="ms-1" v-html="hintText"></span>
-                    </div>
+                    <!-- Hint & Tags -->
+                    <div data-role="hintsAndTags" class="position-relative">
+                        <!-- Hint Container -->
+                        <div
+                            data-role="hint-container"
+                            v-if="hintText"
+                            class="d-inline-block"
+                        >
+                            <span>❤️ <b>Hint:</b></span>
+                            <span class="ms-1" v-html="hintText"></span>
+                        </div>
 
-                    <!-- Tag Container -->
-                    <div
-                        data-role="tag-container"
-                        class="position-absolute w-100"
-                    >
-                        <div class="d-flex justify-content-end">
-                            <div
-                                class="d-inline-block"
-                                v-for="tag of tags"
-                                :key="tags.indexOf(tag)"
-                            >
-                                <span class="badge text-bg-ben me-2">{{
-                                    tag
-                                }}</span>
+                        <!-- Tag Container -->
+                        <div
+                            data-role="tag-container"
+                            class="position-absolute w-100"
+                        >
+                            <div class="d-flex justify-content-end">
+                                <div
+                                    class="d-inline-block"
+                                    v-for="tag of tags"
+                                    :key="tags.indexOf(tag)"
+                                >
+                                    <span class="badge text-bg-ben me-2">{{
+                                        tag
+                                    }}</span>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Next / Previous buttons -->
+
+                    <div
+                        v-if="totalQuestions > 1"
+                        data-role="question-buttons"
+                        class="row position-relative border border-0 border-warning"
+                    >
+                        <div
+                            data-role="buttons"
+                            class="d-flex p-2 container-fluid justify-content-end border border-0 border-primary"
+                            style=""
+                        >
+                            <!-- Circles -->
+                            <div :class="w < 768 ? 'd-none' : 'col'">
+                                <div
+                                    data-role="circleContainer"
+                                    v-for="q in questions"
+                                    :key="questions.indexOf(q)"
+                                    @click="
+                                        toggleQuestion(questions.indexOf(q))
+                                    "
+                                    :class="
+                                        getClassFor({
+                                            el: 'circleContainer',
+                                            params: {
+                                                idx: questions.indexOf(q),
+                                            },
+                                        })
+                                    "
+                                >
+                                    <div
+                                        :class="
+                                            getCircleClass(questions.indexOf(q))
+                                        "
+                                        data-role="circle"
+                                    >
+                                        &nbsp;
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End Circles -->
+
+                            <!-- Previous & Next button -->
+                            <div data-role="button-container" class="p-0">
+                                <!-- score board 
+                            -->
+                                <div data-role="board" class="d-inline-block">
+                                    <div class="rounded-1 me-1 small p-1">
+                                        <!-- <span class="me-2">Progress:</span> -->
+                                        <div
+                                            class="badge badge-pill text-bg-danger me-1"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-title="Total incorrectly answered questions"
+                                        >
+                                            {{ wrong }}
+                                        </div>
+                                        <div
+                                            class="badge badge-pill text-bg-success me-1"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-title="Total correctly answered questions"
+                                        >
+                                            {{ right }}
+                                        </div>
+                                        <div
+                                            class="badge badge-pill text-bg-warning"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-title="Total unanswered questions"
+                                        >
+                                            {{ unanswered }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Previous btn -->
+                                <button
+                                    :disabled="currentQuestionNumber === 1"
+                                    @click="
+                                        toggleQuestion(
+                                            currentQuestionNumber - 2
+                                        )
+                                    "
+                                    type="button"
+                                    class="btn btn-sm btn-primary border border-1 border-secondary me-1"
+                                >
+                                    Prev
+                                </button>
+
+                                <!-- Next btn -->
+                                <button
+                                    v-if="questionsRemaining"
+                                    :disabled="
+                                        currentQuestionNumber >=
+                                        questions.length
+                                    "
+                                    @click="
+                                        toggleQuestion(currentQuestionNumber)
+                                    "
+                                    type="button"
+                                    class="btn btn-sm btn-primary border border-1 border-secondary"
+                                >
+                                    Next
+                                </button>
+                            </div>
+
+                            <!-- TODO: FIX UP-->
+                            <span class="me-2 d-none">
+                                You're on question # {{ currentQuestionNumber }}
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Next / Previous buttons -->
-
+                <!-- Branding / Tagline -->
                 <div
-                    v-if="totalQuestions > 1"
-                    data-role="question-buttons"
-                    class="row position-relative border border-0 border-warning"
+                    data-role="branding"
+                    class="position-absolute container-fluid d-flex justify-content-end"
                 >
                     <div
-                        data-role="buttons"
-                        class="d-flex p-2 container-fluid justify-content-end border border-0 border-primary"
-                        style=""
+                        class="branding p-2 small"
+                        style="font-weight: 500; font-size: 11px"
                     >
-                        <!-- Circles -->
-                        <div class="col border border-0 border-info">
+                        <!-- About the app -->
+                        <a :href="getBlurb('app').link" target="_blank">
                             <div
-                                data-role="circleContainer"
-                                v-for="q in questions"
-                                :key="questions.indexOf(q)"
-                                @click="toggleQuestion(questions.indexOf(q))"
-                                :class="
-                                    getClassFor({
-                                        el: 'circleContainer',
-                                        params: { idx: questions.indexOf(q) },
-                                    })
-                                "
+                                data-bs-toggle="tooltip"
+                                data-bs-html="true"
+                                data-bs-delay='{"show":0,"hide":0}'
+                                :data-bs-title="getBlurb('app').html"
+                                class="d-inline-block pe-2 border border-1 border-top-0 border-bottom-0 border-start-0 border-secondary"
                             >
-                                <div
-                                    :class="
-                                        getCircleClass(questions.indexOf(q))
-                                    "
-                                    data-role="circle"
-                                >
-                                    &nbsp;
-                                </div>
+                                About this demo
                             </div>
-                        </div>
-                        <!-- End Circles -->
+                        </a>
 
-                        <!-- Previous & Next button -->
-                        <div data-role="button-container" class="p-0">
-                            <!-- score board 
-                            -->
-                            <div data-role="board" class="d-inline-block">
-                                <div class="rounded-1 me-1 small p-1">
-                                    <!-- <span class="me-2">Progress:</span> -->
-                                    <div
-                                        class="badge badge-pill text-bg-danger me-1"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-title="Total incorrectly answered questions"
-                                    >
-                                        {{ wrong }}
-                                    </div>
-                                    <div
-                                        class="badge badge-pill text-bg-success me-1"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-title="Total correctly answered questions"
-                                    >
-                                        {{ right }}
-                                    </div>
-                                    <div
-                                        class="badge badge-pill text-bg-warning"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-title="Total unanswered questions"
-                                    >
-                                        {{ unanswered }}
-                                    </div>
-                                </div>
+                        <!-- About ben -->
+                        <a :href="getBlurb('ben').link" target="_blank">
+                            <div
+                                data-bs-toggle="tooltip"
+                                data-bs-html="true"
+                                data-bs-delay='{"show":0,"hide":0}'
+                                :data-bs-title="getBlurb('ben').html"
+                                class="ps-2 d-inline-block"
+                            >
+                                About Ben
                             </div>
-
-                            <!-- Previous btn -->
-                            <button
-                                :disabled="currentQuestionNumber === 1"
-                                @click="
-                                    toggleQuestion(currentQuestionNumber - 2)
-                                "
-                                type="button"
-                                class="btn btn-sm btn-primary border border-1 border-secondary me-1"
-                            >
-                                Prev
-                            </button>
-
-                            <!-- Next btn -->
-                            <button
-                                v-if="questionsRemaining"
-                                :disabled="
-                                    currentQuestionNumber >= questions.length
-                                "
-                                @click="toggleQuestion(currentQuestionNumber)"
-                                type="button"
-                                class="btn btn-sm btn-primary border border-1 border-secondary"
-                            >
-                                Next
-                            </button>
-                        </div>
-
-                        <!-- TODO: FIX UP-->
-                        <span class="me-2 d-none">
-                            You're on question # {{ currentQuestionNumber }}
-                        </span>
+                        </a>
                     </div>
                 </div>
             </div>
-
-            <!-- Answer -->
-            <div class="answer d-none">Answer: {{ answer }}</div>
+            <!-- End [data-type="question"] -->
         </div>
-        <!-- End [data-type="question"] -->
     </div>
-
-    <!-- Scoreboard -->
-    <div
-        data-role="score-board"
-        class="position-absolute top-0 container-fluid d-flex"
-    ></div>
 
     <!-- FOR PRINT -->
 
     <div data-role="print" class="container-fluid">
-        <!-- <div class="container">
-            <h1>For print</h1>
-        </div> -->
-
         <div data-role="print-header">
             <div>Print header...</div>
         </div>
@@ -762,6 +841,23 @@ export default Ben
 
 #outerShell {
     margin-top: 20px;
+    max-width: 1000px;
+    align-self: center !important;
+    border-radius: 10px;
+    padding: 5px;
+    position: relative;
+}
+
+[data-role='branding'] {
+    top: calc(100% - 50px);
+    z-index: 5;
+}
+
+.branding {
+    background-color: rgba(0, 0, 0, 0.75);
+    color: #eeeeee;
+    border-radius: 3px;
+    display: block;
 }
 
 [data-role='board'] {
@@ -813,7 +909,7 @@ export default Ben
     margin-top: 0px;
 }
 /* --------------------------------------------------
-Mathjax 
+Mathjax
 -------------------------------------------------- */
 mjx-container,
 [jax='CHTML'] {
@@ -822,6 +918,29 @@ mjx-container,
 }
 mjx-container[display='true'] {
     font-size: 1.3em !important;
+}
+
+/* Tooltips */
+/* .tooltip {
+    opacity: 1 !important;
+}
+.tooltip-inner {
+    background-color: rgba(185, 177, 255, 0.95) !important;
+    min-width: 300px !important;
+}
+.tooltip-arrow {
+    background-color: rgba(185, 177, 255, 0.95) !important;
+}
+*/
+.custom-tooltip,
+.wide,
+.wide > .tooltip-inner {
+    border: 2px solid yellow !important;
+    min-width: 300px;
+}
+
+.tooltip-inner {
+    min-width: 290px;
 }
 </style>
 
@@ -836,8 +955,9 @@ Question & question text
 -------------------------------------------------- */
 [data-role='question-container'] {
     border-radius: 7px;
-    background-color: rgba(238, 238, 238, 0.75);
     background-color: rgba(255, 255, 255, 0.85);
+    /* min-height: 580px; */
+    margin-bottom: 55px;
 }
 
 [data-role='question'] {
@@ -853,9 +973,7 @@ Question & question text
     font-size: 1.5em;
     font-family: adobe-garamond-pro;
 }
-[data-role='hintsAndTags'] {
-    border-bottom: 1px solid #eeeeee;
-}
+
 [data-role='hint-container'] {
     top: -10px;
     z-index: 6;
