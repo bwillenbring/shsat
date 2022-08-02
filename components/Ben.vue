@@ -33,6 +33,7 @@ const Ben = {
             questionText: null,
             hintText: null,
             choices: [],
+            values: [],
             answer: null,
             tags: [],
             currentQuestion: {},
@@ -260,6 +261,7 @@ const Ben = {
             let {
                 questionText = null,
                 choices = [],
+                values = [],
                 answer = null,
                 tags = [],
                 hint = null,
@@ -276,6 +278,7 @@ const Ben = {
             const fn1 = () => {
                 // Set questionText last — this is what triggers renderMath
                 THIS.choices = this.formatChoices(choices)
+                THIS.values = choices
                 THIS.tags = this.formatTags(tags)
                 THIS.answer = answer
                 THIS.questionText = questionText
@@ -361,6 +364,7 @@ const Ben = {
                 this.questions = q.map((item) => {
                     // Give one more prop
                     item['idx'] = q.indexOf(item)
+                    item['values'] = item.choices
                     return item
                 })
                 // Also set attemptedAnswers
@@ -435,8 +439,9 @@ const Ben = {
             // Persist the user's selection for the current question
             this.setSelectionForQuestion(q.idx, userChoice)
             let { choices, answer, idx } = q
+
             this.currentQuestion.isCorrect =
-                userChoice === answer ? true : false
+                String(userChoice) == String(answer) ? true : false
             this.attemptedAnswers[String(idx)].isCorrect =
                 this.currentQuestion.isCorrect
             this.calculateScore()
@@ -455,7 +460,6 @@ const Ben = {
         },
         setSelectionForQuestion(idx, userChoice) {
             this.attemptedAnswers[String(idx)].userChoice = userChoice
-            this.log(`Setting user choice for idx=${idx} to ${userChoice}`)
         },
         getSelectionForQuestion(idx) {
             try {
@@ -532,7 +536,13 @@ export default Ben
                             v-if="choices.length && choices.length > 0"
                         >
                             <li
-                                @click="selectChoice(c)"
+                                @click="
+                                    selectChoice(
+                                        currentQuestion.values[
+                                            choices.indexOf(c)
+                                        ]
+                                    )
+                                "
                                 :class="
                                     c ==
                                     getSelectionForQuestion(currentQuestion.idx)
@@ -545,7 +555,11 @@ export default Ben
                                 <span
                                     :data-question-idx="currentQuestionNumber"
                                     :data-choice-idx="choices.indexOf(c)"
-                                    :data-value="c"
+                                    :data-value="
+                                        currentQuestion.values[
+                                            choices.indexOf(c)
+                                        ]
+                                    "
                                     class="choice"
                                     >{{ c }}</span
                                 >
