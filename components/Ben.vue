@@ -23,7 +23,6 @@ const Ben = {
             count: 0,
             loaded: false,
             questions: [],
-            attemptedAnswers: [],
             defaultQuestions: [
                 {
                     questionText:
@@ -413,19 +412,23 @@ const Ben = {
                 // Set the component questions correctly
                 this.questions = q.map((item) => {
                     // Give one more prop
-                    item['idx'] = q.indexOf(item)
-                    item['values'] = item.choices
+                    item.idx = q.indexOf(item)
+                    item.values = item.choices
+                    // This stores what the user selects
+                    item.userChoice = null
+                    item.status = 'unanswered'
+                    item.isCorrect = null
                     return item
                 })
-                // Also set attemptedAnswers
-                this.attemptedAnswers = q.map((item) => {
-                    return {
-                        choices: item.choices,
-                        answer: item.answer,
-                        userChoice: '',
-                        status: 'unanswered',
-                    }
-                })
+                // Also set attemp tedAnswers
+                // this.attem ptedAnswers = q.map((item) => {
+                //     return {
+                //         choices: item.choices,
+                //         answer: item.answer,
+                //         userChoice: '',
+                //         status: 'unanswered',
+                //     }
+                // })
             }
         },
         insertDependency({
@@ -492,18 +495,17 @@ const Ben = {
 
             this.currentQuestion.isCorrect =
                 String(userChoice) == String(answer) ? true : false
-            this.attemptedAnswers[String(idx)].isCorrect =
-                this.currentQuestion.isCorrect
+
             this.calculateScore()
 
             console.log(`Selecting choice ${userChoice}`)
         },
         calculateScore() {
-            let right = this.attemptedAnswers.filter(
+            let right = this.questions.filter(
                 (item) => item.isCorrect == true
             ).length
 
-            let wrong = this.attemptedAnswers.filter(
+            let wrong = this.questions.filter(
                 (item) => item.isCorrect == false
             ).length
 
@@ -511,15 +513,12 @@ const Ben = {
             this.right = right
         },
         setSelectionForQuestion(idx, userChoice) {
-            this.attemptedAnswers[String(idx)].userChoice = userChoice
-            this.attemptedAnswers[String(idx)].status = 'answered'
-            // let a = this.attemptedAnswers[String(idx)]
+            this.questions[idx].userChoice = userChoice
+            this.questions[idx].status = 'answered'
         },
         getSelectionForQuestion(idx) {
             try {
-                let mostRecentAnswer =
-                    this.attemptedAnswers[String(idx)].userChoice || null
-                return mostRecentAnswer
+                return this.questions[idx].userChoice || null
             } catch (err) {
                 return null
             }
@@ -528,22 +527,25 @@ const Ben = {
             switch (el) {
                 case 'choice':
                     let idx = this.currentQuestion.idx
-                    let allAnswers = this.attemptedAnswers.filter(
+                    let allAnswers = this.questions.filter(
                         (item) => item.userChoice
                     )
+
                     let val = params.value || null
                     // If no attempt has been made, return 'choice'
                     try {
                         if (
                             val &&
                             String(val) ==
-                                String(allAnswers[String(idx)].userChoice)
+                                String(this.questions[idx].userChoice)
                         ) {
                             return 'choice selected'
                         } else {
                             return 'choice'
                         }
                     } catch (err) {
+                        this.log('error...')
+                        this.log(err)
                         return 'choice'
                     }
                     break
