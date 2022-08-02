@@ -875,7 +875,7 @@ export default Ben
     border-radius: 10px;
     padding: 5px;
     position: relative;
-    width: auto;
+    width: 100%;
 }
 
 [data-role='branding'] {
