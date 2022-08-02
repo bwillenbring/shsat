@@ -686,7 +686,7 @@ export default Ben
                             style=""
                         >
                             <!-- Circles -->
-                            <div :class="w < 768 ? 'd-none' : 'col'">
+                            <div :class="w < 500 ? 'd-none' : 'col'">
                                 <div
                                     data-role="circleContainer"
                                     v-for="q in questions"
