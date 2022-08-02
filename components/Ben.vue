@@ -996,7 +996,7 @@ Question & question text
     background-color: rgba(255, 255, 255, 0.85);
     border: 1px solid #cccccc;
     border-radius: 7px;
-    min-height: 200px;
+    min-height: 350px;
     position: relative;
 }
 [data-role='questionText'] {
