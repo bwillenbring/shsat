@@ -153,6 +153,12 @@ const Ben = {
             let fn = () => this.renderMath()
             window.setTimeout(fn, 0)
         },
+        wrong: function (a, b) {
+            this.unanswered = this.totalQuestions - (this.wrong + this.right)
+        },
+        right: function (a, b) {
+            this.unanswered = this.totalQuestions - (this.wrong + this.right)
+        },
     },
     methods: {
         detectMobile() {
