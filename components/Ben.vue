@@ -489,6 +489,8 @@ const Ben = {
             this.attemptedAnswers[String(idx)].isCorrect =
                 this.currentQuestion.isCorrect
             this.calculateScore()
+
+            console.log(`Selecting choice ${userChoice}`)
         },
         calculateScore() {
             let right = this.attemptedAnswers.filter(
@@ -504,6 +506,8 @@ const Ben = {
         },
         setSelectionForQuestion(idx, userChoice) {
             this.attemptedAnswers[String(idx)].userChoice = userChoice
+            this.attemptedAnswers[String(idx)].status = 'answered'
+            // let a = this.attemptedAnswers[String(idx)]
         },
         getSelectionForQuestion(idx) {
             try {
@@ -516,6 +520,23 @@ const Ben = {
         },
         getClassFor({ el = null, params = {} } = {}) {
             switch (el) {
+                case 'choice':
+                    let idx = this.currentQuestion.idx
+                    let allAnswers = this.attemptedAnswers.filter(
+                        (item) => item.userChoice
+                    )
+                    let val = params.value || null
+                    // If no attempt has been made, return 'choice'
+                    try {
+                        if (val && val === allAnswers[String(idx)].userChoice) {
+                            return 'choice selected'
+                        } else {
+                            return 'choice'
+                        }
+                    } catch (err) {
+                        return 'choice'
+                    }
+                    break
                 case 'circleContainer':
                     const answeredAlready =
                         this.getSelectionForQuestion(params.idx) || false
@@ -585,12 +606,14 @@ export default Ben
                                         )
                                     "
                                     :class="
-                                        c ==
-                                        getSelectionForQuestion(
-                                            currentQuestion.idx
-                                        )
-                                            ? 'choice selected'
-                                            : 'choice'
+                                        getClassFor({
+                                            el: 'choice',
+                                            params: {
+                                                value: currentQuestion.values[
+                                                    choices.indexOf(c)
+                                                ],
+                                            },
+                                        })
                                     "
                                     v-for="c in choices"
                                     :key="choices.indexOf(c)"
@@ -647,7 +670,7 @@ export default Ben
                     <!-- Next / Previous buttons -->
 
                     <div
-                        v-if="totalQuestions > 1"
+                        v-if="totalQuestions > 0"
                         data-role="question-buttons"
                         class="row position-relative border border-0 border-warning"
                     >
