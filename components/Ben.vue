@@ -534,7 +534,11 @@ const Ben = {
                     let val = params.value || null
                     // If no attempt has been made, return 'choice'
                     try {
-                        if (val && val === allAnswers[String(idx)].userChoice) {
+                        if (
+                            val &&
+                            String(val) ==
+                                String(allAnswers[String(idx)].userChoice)
+                        ) {
                             return 'choice selected'
                         } else {
                             return 'choice'
