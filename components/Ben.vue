@@ -54,9 +54,11 @@ const Ben = {
         },
     },
     mounted() {
-        let [jq, bs, math1, math2, ax] = [
+        let [jq, bs, bs_with_popper, popper, math1, math2, ax] = [
             'https://code.jquery.com/jquery-3.6.0.min.js',
             'https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css',
+            'https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js',
+            'https://unpkg.com/@popperjs/core@2',
             'https://polyfill.io/v3/polyfill.min.js?features=es6',
             'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js',
         ]
@@ -74,8 +76,27 @@ const Ben = {
             })
         }
 
-        // Bootstrap
-        this.insertDependency({ type: 'text/css', src: bs, id: 'bs' })
+        // Popper Function
+        const fn_popper = () => {
+            const tooltipTriggerList = document.querySelectorAll(
+                '[data-bs-toggle="tooltip"]'
+            )
+            const tooltipList = [...tooltipTriggerList].map(
+                (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
+            )
+            console.log('popper!!!!!')
+        }
+        setTimeout(fn_popper, 500)
+
+        // Bootstrap + Popper
+        this.insertDependency({ src: bs_with_popper, id: 'bs' })
+
+        // Bootstrap CSS
+        this.insertDependency({
+            type: 'text/css',
+            src: bs,
+            id: 'bss',
+        })
 
         // MathJax
         this.insertDependency({
@@ -126,6 +147,16 @@ const Ben = {
         },
     },
     methods: {
+        enableTooltips() {
+            // Code here
+            const tooltipTriggerList = document.querySelectorAll(
+                '[data-bs-toggle="tooltip"]'
+            )
+            const tooltipList = [...tooltipTriggerList].map(
+                (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
+            )
+            console.log('popper!!!!!')
+        },
         getQuestionsFromParams(param = 'quiz') {
             try {
                 // This method parses the querystring
@@ -238,8 +269,9 @@ const Ben = {
 
             this.inTransition = true
             const THIS = this
+            // This fades it IN
             const fn2 = () => {
-                Q.animate({ opacity: 1 }, 500)
+                Q.animate({ opacity: 1 }, 250)
             }
             const fn1 = () => {
                 // Set questionText last — this is what triggers renderMath
@@ -249,12 +281,12 @@ const Ben = {
                 THIS.questionText = questionText
                 THIS.hintText = hint
                 THIS.currentQuestion = this.questions[idx]
-                setTimeout(fn2, 50)
+                setTimeout(fn2, 0)
             }
 
             if (idx >= 0 && idx < this.questions.length) {
-                // Check answer status
-                Q.animate({ opacity: 0 }, 500, fn1)
+                // This fades stuff OUT
+                Q.animate({ opacity: 0 }, 400, fn1)
             } else {
                 this.questionText = ''
             }
@@ -600,16 +632,22 @@ export default Ben
                                     <!-- <span class="me-2">Progress:</span> -->
                                     <div
                                         class="badge badge-pill text-bg-danger me-1"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-title="Total incorrectly answered questions"
                                     >
                                         {{ wrong }}
                                     </div>
                                     <div
                                         class="badge badge-pill text-bg-success me-1"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-title="Total correctly answered questions"
                                     >
                                         {{ right }}
                                     </div>
                                     <div
                                         class="badge badge-pill text-bg-warning"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-title="Total unanswered questions"
                                     >
                                         {{ unanswered }}
                                     </div>
@@ -660,22 +698,7 @@ export default Ben
     <div
         data-role="score-board"
         class="position-absolute top-0 container-fluid d-flex"
-    >
-        <!-- <div data-role="board" class="d-inline-block">
-            <div class="rounded-1 text-bg-secondary p-2 h6 floater">
-                <span class="me-2">Progress:</span>
-                <div class="badge badge-pill text-bg-danger me-2">
-                    {{ wrong }}
-                </div>
-                <div class="badge badge-pill text-bg-success me-2">
-                    {{ right }}
-                </div>
-                <div class="badge badge-pill text-bg-warning">
-                    {{ unanswered }}
-                </div>
-            </div>
-        </div> -->
-    </div>
+    ></div>
 
     <!-- FOR PRINT -->
 
