@@ -42,7 +42,7 @@ const Ben = {
             currentQuestion: {},
             currentlySelectedChoice: null,
             blurb_app: `A free demo for parents and kids to try out.`,
-            blurb_ben: `A NYC dad whose twin daughters attend Hunter college HS and Brooklyn Tech.`,
+            blurb_ben: `A NYC dad with kids at Hunter college HS and Brooklyn Tech.`,
         }
     },
     computed: {
