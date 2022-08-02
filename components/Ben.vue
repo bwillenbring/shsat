@@ -869,7 +869,7 @@ export default Ben
 }
 
 #outerShell {
-    margin-top: 20px;
+    /* margin-top: 20px; */
     /* max-width: 1000px; */
     align-self: center !important;
     border-radius: 10px;
