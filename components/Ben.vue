@@ -105,6 +105,11 @@ const Ben = {
             id: 'bss',
         })
 
+        // Masonry
+        this.insertDependency({
+            src: 'https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js',
+        })
+
         // MathJax
         this.insertDependency({
             src: math1,
@@ -181,7 +186,7 @@ const Ben = {
                 },
                 complete: () => {
                     THIS.choices = this.formatChoices(choices)
-                    THIS.values = choices
+                    THIS.values = this.forceArray(choices)
                     THIS.tags = this.formatTags(tags)
                     THIS.answer = answer
                     THIS.questionText = questionText
@@ -267,6 +272,15 @@ const Ben = {
 
             return null
         },
+        forceArray(val) {
+            if (Array.isArray(val)) return val
+
+            try {
+                return eval(val)
+            } catch (err) {
+                return []
+            }
+        },
         formatChoices(choices) {
             let formattedChoices = []
             // we don't know if choices = string, array, or something else
@@ -274,7 +288,7 @@ const Ben = {
                 return formattedChoices
             }
             if (typeof choices === 'string') {
-                formattedChoices = eval(choices)
+                formattedChoices = this.forceArray(choices)
                 // return formattedChoices
                 // Format each choice
                 formattedChoices = formattedChoices.map((c) =>
@@ -415,22 +429,13 @@ const Ben = {
                 this.questions = q.map((item) => {
                     // Give one more prop
                     item.idx = q.indexOf(item)
-                    item.values = item.choices
+                    item.values = this.forceArray(item.choices)
                     // This stores what the user selects
                     item.userChoice = null
                     item.status = 'unanswered'
                     item.isCorrect = null
                     return item
                 })
-                // Also set attemp tedAnswers
-                // this.attem ptedAnswers = q.map((item) => {
-                //     return {
-                //         choices: item.choices,
-                //         answer: item.answer,
-                //         userChoice: '',
-                //         status: 'unanswered',
-                //     }
-                // })
             }
         },
         insertDependency({
@@ -499,8 +504,6 @@ const Ben = {
                 String(userChoice) == String(answer) ? true : false
 
             this.calculateScore()
-
-            console.log(`Selecting choice ${userChoice}`)
         },
         calculateScore() {
             let right = this.questions.filter(
@@ -589,7 +592,7 @@ export default Ben
         <div
             id="outerShell"
             v-show="loaded"
-            class="position-relative container-fluid m-1 border border-4 border-secondary theme_brooklyn"
+            :class="`position-relative container-fluid m-1 border border-4 border-secondary theme_${theme}`"
         >
             <!-- Fader -->
             <div data-role="fader"></div>
@@ -630,6 +633,8 @@ export default Ben
                                                 "
                                             >
                                                 <li
+                                                    v-for="c in choices"
+                                                    :key="choices.indexOf(c)"
                                                     @click="
                                                         selectChoice(
                                                             currentQuestion
@@ -653,8 +658,6 @@ export default Ben
                                                             },
                                                         })
                                                     "
-                                                    v-for="c in choices"
-                                                    :key="choices.indexOf(c)"
                                                 >
                                                     <span
                                                         :data-question-idx="
@@ -914,27 +917,17 @@ export default Ben
 
     <!-- FOR PRINT -->
 
-    <div data-role="print" class="container-fluid">
-        <div data-role="print-header">
-            <div>Print header...</div>
-        </div>
-
+    <div
+        data-role="print"
+        class="row"
+        data-masonry='{"percentPosition": true }'
+        style="position: relative; border: 2px solid grey"
+    >
         <!-- Iterate over each question -->
         <div v-for="q in questions" class="card" data-role="print-question">
-            <div class="h4 card-header p-2" v-html="q.questionText"></div>
-            <div class="card-body h6">
-                <!-- Choices -->
-                <div class="container">
-                    <div>
-                        <ol
-                            class="choices"
-                            v-if="choices.length && choices.length > 0"
-                        >
-                            <li v-for="c in choices" :key="choices.indexOf(c)">
-                                <span class="choice">{{ c }}</span>
-                            </li>
-                        </ol>
-                    </div>
+            <div class="col-sm-6 col-lg-4 mb-4">
+                <div class="card border border-1 border-secondary">
+                    question
                 </div>
             </div>
         </div>
@@ -944,7 +937,7 @@ export default Ben
 <style>
 @media screen {
     [data-role='print'] {
-        display: none;
+        display: none !important;
     }
 }
 @media print {
@@ -1016,18 +1009,6 @@ export default Ben
     visibility: visible;
     opacity: 1;
     transition: opacity 0.2s linear;
-}
-
-[data-role='print-header'] {
-    position: fixed;
-    top: 0;
-    height: 100px;
-    border: 0px solid red;
-    display: block;
-    width: 100%;
-    background-color: #ffffff;
-    padding: 25px;
-    z-index: 10;
 }
 
 [data-role='print'] {
