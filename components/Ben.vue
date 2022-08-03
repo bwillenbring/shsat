@@ -148,10 +148,6 @@ const Ben = {
                 this.displayQuestion(0)
             }
         },
-        questionText: function (a, b) {
-            let fn = () => this.renderMath()
-            window.setTimeout(fn, 0)
-        },
         wrong: function (a, b) {
             this.unanswered = this.totalQuestions - (this.wrong + this.right)
         },
@@ -160,8 +156,55 @@ const Ben = {
         },
     },
     methods: {
+        fade(idx = 0) {
+            let {
+                questionText = null,
+                choices = [],
+                values = [],
+                answer = null,
+                tags = [],
+                hint = null,
+            } = this.questions[idx]
+
+            // get 'this'
+            let THIS = this
+            // First get the target(s)
+            const targets = '[data-role="question"]'
+
+            // we fade out the currentQuestion
+            let fadeOut = anime({
+                targets: targets,
+                opacity: {
+                    value: 0,
+                    duration: 300,
+                    easing: 'easeInOutQuad',
+                },
+                complete: () => {
+                    THIS.choices = this.formatChoices(choices)
+                    THIS.values = choices
+                    THIS.tags = this.formatTags(tags)
+                    THIS.answer = answer
+                    THIS.questionText = questionText
+                    THIS.hintText = hint
+                    THIS.currentQuestion = this.questions[idx]
+                },
+            })
+            fadeOut.finished.then(() => {
+                // Render the equations
+                THIS.renderMath()
+                // Now fade the new quetion IN
+                let fadein = anime({
+                    targets: targets,
+                    opacity: {
+                        value: 1,
+                        duration: 250,
+                        easing: 'easeInOutQuad',
+                    },
+                })
+            })
+        },
         detectMobile() {
-            let [w, h] = [window.innerWidth, window.innerHeight]
+            let [w, h] = [window.outerWidth, window.outerHeight]
             let r = new RegExp(
                 /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
             )
@@ -170,7 +213,8 @@ const Ben = {
             this.isMobile = m
             this.w = w
             this.h = h
-            return
+            console.log(`w=${w}, h = ${h}, isMobile=${m}`)
+            return true
         },
         getBlurb(b) {
             switch (b) {
@@ -293,54 +337,12 @@ const Ben = {
         },
         renderMath(attempts = 1) {
             attempts++
-            try {
-                MathJax.typeset()
-            } catch (err) {
-                if (attempts < 3) {
-                    const THIS = this
-                    const fn = () => THIS.renderMath(attempts)
-                    setTimeout(fn, 500)
-                } else {
-                    this.log(`Could not render math after ${attempts} attemps`)
-                    this.log(err)
-                }
-            }
+            MathJax.typesetPromise().then((r) => console.log(r))
         },
         displayQuestion(idx) {
-            let {
-                questionText = null,
-                choices = [],
-                values = [],
-                answer = null,
-                tags = [],
-                hint = null,
-            } = this.questions[idx]
-            // This is what you'll animat
-            const Q = $('[data-role="questionText"],[data-role="choices"]')
-
-            this.inTransition = true
-            const THIS = this
-            // This fades it IN
-            const fn2 = () => {
-                Q.animate({ opacity: 1 }, 250)
-            }
-            const fn1 = () => {
-                // Set questionText last — this is what triggers renderMath
-                THIS.choices = this.formatChoices(choices)
-                THIS.values = choices
-                THIS.tags = this.formatTags(tags)
-                THIS.answer = answer
-                THIS.questionText = questionText
-                THIS.hintText = hint
-                THIS.currentQuestion = this.questions[idx]
-                setTimeout(fn2, 0)
-            }
-
             if (idx >= 0 && idx < this.questions.length) {
-                // This fades stuff OUT
-                Q.animate({ opacity: 0 }, 400, fn1)
-            } else {
-                this.questionText = ''
+                // This fades stuff OUT, then IN
+                this.fade(idx)
             }
         },
         async loadQuestions() {
@@ -587,214 +589,292 @@ export default Ben
         <div
             id="outerShell"
             v-show="loaded"
-            class="row m-1 border border-4 border-secondary theme_brooklyn"
+            class="position-relative container-fluid m-1 border border-4 border-secondary theme_brooklyn"
         >
-            <!-- Testing display resolutions -->
-            <div class="d-none"><b>Dimensions</b> {{ w }} x {{ h }}</div>
-
-            <!-- Question Container  -->
-            <div data-role="question-container" class="container p-0">
-                <div data-role="question" :data-test="currentQuestionNumber">
-                    <!-- Question Text (allow setting html) -->
-                    <div
-                        class="h4"
-                        data-role="questionText"
-                        v-html="questionText"
-                    ></div>
-
-                    <!-- Choices -->
-                    <div data-role="choices" class="container-fluid">
-                        <div>
-                            <ol
-                                class="choices"
-                                v-if="choices.length && choices.length > 0"
+            <!-- Fader -->
+            <div data-role="fader"></div>
+            <!-- Begin Table -->
+            <div class="table-container">
+                <table class="question-table rounded-2 w-100 p-0 m-0">
+                    <tr>
+                        <td class="verticalSpacer" style="">&nbsp;</td>
+                        <td valign="top">
+                            <!-- Question Container  -->
+                            <div
+                                data-role="question-container"
+                                class="container-fluid p-0"
                             >
-                                <li
-                                    @click="
-                                        selectChoice(
-                                            currentQuestion.values[
-                                                choices.indexOf(c)
-                                            ]
-                                        )
-                                    "
-                                    :class="
-                                        getClassFor({
-                                            el: 'choice',
-                                            params: {
-                                                value: currentQuestion.values[
-                                                    choices.indexOf(c)
-                                                ],
-                                            },
-                                        })
-                                    "
-                                    v-for="c in choices"
-                                    :key="choices.indexOf(c)"
-                                >
-                                    <span
-                                        :data-question-idx="
-                                            currentQuestionNumber
-                                        "
-                                        :data-choice-idx="choices.indexOf(c)"
-                                        :data-value="
-                                            currentQuestion.values[
-                                                choices.indexOf(c)
-                                            ]
-                                        "
-                                        class="choice"
-                                        >{{ c }}</span
-                                    >
-                                </li>
-                            </ol>
-                        </div>
-                    </div>
-
-                    <!-- Hint & Tags -->
-                    <div data-role="hintsAndTags" class="position-relative">
-                        <!-- Hint Container -->
-                        <div
-                            data-role="hint-container"
-                            v-if="hintText"
-                            class="d-inline-block"
-                        >
-                            <span>❤️ <b>Hint:</b></span>
-                            <span class="ms-1" v-html="hintText"></span>
-                        </div>
-
-                        <!-- Tag Container -->
-                        <div
-                            data-role="tag-container"
-                            class="position-absolute w-100"
-                        >
-                            <div class="d-flex justify-content-end">
                                 <div
-                                    class="d-inline-block"
-                                    v-for="tag of tags"
-                                    :key="tags.indexOf(tag)"
+                                    class="d-flex-row"
+                                    data-role="question"
+                                    :data-test="currentQuestionNumber"
                                 >
-                                    <span class="badge text-bg-ben me-2">{{
-                                        tag
-                                    }}</span>
+                                    <!-- Question Text (allow setting html) -->
+                                    <div
+                                        class="h4"
+                                        data-role="questionText"
+                                        v-html="questionText"
+                                    ></div>
+
+                                    <!-- Choices -->
+                                    <div
+                                        data-role="choices"
+                                        class="container-fluid"
+                                    >
+                                        <div>
+                                            <ol
+                                                class="choices"
+                                                v-if="
+                                                    choices.length &&
+                                                    choices.length > 0
+                                                "
+                                            >
+                                                <li
+                                                    @click="
+                                                        selectChoice(
+                                                            currentQuestion
+                                                                .values[
+                                                                choices.indexOf(
+                                                                    c
+                                                                )
+                                                            ]
+                                                        )
+                                                    "
+                                                    :class="
+                                                        getClassFor({
+                                                            el: 'choice',
+                                                            params: {
+                                                                value: currentQuestion
+                                                                    .values[
+                                                                    choices.indexOf(
+                                                                        c
+                                                                    )
+                                                                ],
+                                                            },
+                                                        })
+                                                    "
+                                                    v-for="c in choices"
+                                                    :key="choices.indexOf(c)"
+                                                >
+                                                    <span
+                                                        :data-question-idx="
+                                                            currentQuestionNumber
+                                                        "
+                                                        :data-choice-idx="
+                                                            choices.indexOf(c)
+                                                        "
+                                                        :data-value="
+                                                            currentQuestion
+                                                                .values[
+                                                                choices.indexOf(
+                                                                    c
+                                                                )
+                                                            ]
+                                                        "
+                                                        class="choice"
+                                                        >{{ c }}</span
+                                                    >
+                                                </li>
+                                            </ol>
+                                        </div>
+                                    </div>
+
+                                    <!-- Hint & Tags -->
+                                    <div
+                                        style="border: 0px solid blue"
+                                        data-role="hintsAndTags"
+                                        class="position-relative"
+                                    >
+                                        <!-- Hint Container -->
+                                        <div
+                                            data-role="hint-container"
+                                            v-if="hintText"
+                                            class="d-inline-block"
+                                        >
+                                            <span>❤️ <b>Hint:</b></span>
+                                            <span
+                                                class="ms-1"
+                                                v-html="hintText"
+                                            ></span>
+                                        </div>
+
+                                        <!-- Tag Container -->
+                                        <div
+                                            data-role="tag-container"
+                                            class="position-absolute w-100"
+                                        >
+                                            <div
+                                                class="d-flex justify-content-end"
+                                            >
+                                                <div
+                                                    class="d-inline-block"
+                                                    v-for="tag of tags"
+                                                    :key="tags.indexOf(tag)"
+                                                >
+                                                    <span
+                                                        class="badge text-bg-ben me-2"
+                                                        >{{ tag }}</span
+                                                    >
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                            <!-- End [data-type="question-container"] -->
+                        </td>
+                        <td class="verticalSpacer">&nbsp;</td>
+                    </tr>
 
-                    <!-- Next / Previous buttons -->
-
-                    <div
-                        v-if="totalQuestions > 0"
-                        data-role="question-buttons"
-                        class="row position-relative border border-0 border-warning"
-                    >
-                        <div
-                            data-role="buttons"
-                            class="d-flex p-2 container-fluid justify-content-end border border-0 border-primary"
-                            style=""
-                        >
-                            <!-- Circles -->
-                            <div :class="w < 500 ? 'd-none' : 'col'">
+                    <!-- Row 2 -->
+                    <tr>
+                        <td colspan="3">
+                            <!-- Put the hints and tags here -->
+                            <div class="container-fluid">
+                                <!-- Next / Previous buttons -->
                                 <div
-                                    data-role="circleContainer"
-                                    v-for="q in questions"
-                                    :key="questions.indexOf(q)"
-                                    @click="
-                                        toggleQuestion(questions.indexOf(q))
-                                    "
-                                    :class="
-                                        getClassFor({
-                                            el: 'circleContainer',
-                                            params: {
-                                                idx: questions.indexOf(q),
-                                            },
-                                        })
-                                    "
+                                    v-if="totalQuestions > 0"
+                                    data-role="question-buttons"
+                                    class="container-fluid position-relative p-0 m-0 border border-0 border-warning bg-light"
                                 >
                                     <div
-                                        :class="
-                                            getCircleClass(questions.indexOf(q))
-                                        "
-                                        data-role="circle"
+                                        data-role="buttons"
+                                        class="d-flex p-2 container-fluid justify-content-end border border-0 border-primary"
+                                        style=""
                                     >
-                                        &nbsp;
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- End Circles -->
+                                        <!-- Circles -->
+                                        <div
+                                            :class="w < 500 ? 'd-none' : 'col'"
+                                        >
+                                            <div
+                                                data-role="circleContainer"
+                                                v-for="q in questions"
+                                                :key="questions.indexOf(q)"
+                                                @click="
+                                                    toggleQuestion(
+                                                        questions.indexOf(q)
+                                                    )
+                                                "
+                                                :class="
+                                                    getClassFor({
+                                                        el: 'circleContainer',
+                                                        params: {
+                                                            idx: questions.indexOf(
+                                                                q
+                                                            ),
+                                                        },
+                                                    })
+                                                "
+                                            >
+                                                <div
+                                                    :class="
+                                                        getCircleClass(
+                                                            questions.indexOf(q)
+                                                        )
+                                                    "
+                                                    data-role="circle"
+                                                >
+                                                    &nbsp;
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- End Circles -->
 
-                            <!-- Previous & Next button -->
-                            <div data-role="button-container" class="p-0">
-                                <!-- score board 
+                                        <!-- Previous & Next button -->
+                                        <div
+                                            data-role="button-container"
+                                            class="p-0"
+                                        >
+                                            <!-- score board 
                             -->
-                                <div data-role="board" class="d-inline-block">
-                                    <div class="rounded-1 me-1 small p-1">
-                                        <!-- <span class="me-2">Progress:</span> -->
-                                        <div
-                                            class="badge badge-pill text-bg-danger me-1"
-                                            data-bs-toggle="tooltip"
-                                            data-bs-title="Total incorrectly answered questions"
-                                        >
-                                            {{ wrong }}
+                                            <div
+                                                data-role="board"
+                                                class="d-inline-block"
+                                            >
+                                                <div
+                                                    class="rounded-1 me-1 small p-1"
+                                                >
+                                                    <!-- <span class="me-2">Progress:</span> -->
+                                                    <div
+                                                        class="badge badge-pill text-bg-danger me-1"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-title="Total incorrectly answered questions"
+                                                    >
+                                                        {{ wrong }}
+                                                    </div>
+                                                    <div
+                                                        class="badge badge-pill text-bg-success me-1"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-title="Total correctly answered questions"
+                                                    >
+                                                        {{ right }}
+                                                    </div>
+                                                    <div
+                                                        class="badge badge-pill text-bg-warning"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-title="Total unanswered questions"
+                                                    >
+                                                        {{ unanswered }}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Previous btn -->
+                                            <button
+                                                :disabled="
+                                                    currentQuestionNumber === 1
+                                                "
+                                                @click="
+                                                    toggleQuestion(
+                                                        currentQuestionNumber -
+                                                            2
+                                                    )
+                                                "
+                                                type="button"
+                                                class="btn btn-sm btn-primary border border-1 border-secondary me-1"
+                                            >
+                                                Prev
+                                            </button>
+
+                                            <!-- Next btn -->
+                                            <button
+                                                v-if="questionsRemaining"
+                                                :disabled="
+                                                    currentQuestionNumber >=
+                                                    questions.length
+                                                "
+                                                @click="
+                                                    toggleQuestion(
+                                                        currentQuestionNumber
+                                                    )
+                                                "
+                                                type="button"
+                                                class="btn btn-sm btn-primary border border-1 border-secondary"
+                                            >
+                                                Next
+                                            </button>
                                         </div>
-                                        <div
-                                            class="badge badge-pill text-bg-success me-1"
-                                            data-bs-toggle="tooltip"
-                                            data-bs-title="Total correctly answered questions"
-                                        >
-                                            {{ right }}
-                                        </div>
-                                        <div
-                                            class="badge badge-pill text-bg-warning"
-                                            data-bs-toggle="tooltip"
-                                            data-bs-title="Total unanswered questions"
-                                        >
-                                            {{ unanswered }}
-                                        </div>
+
+                                        <!-- TODO: FIX UP-->
+                                        <span class="me-2 d-none">
+                                            You're on question #
+                                            {{ currentQuestionNumber }}
+                                        </span>
                                     </div>
                                 </div>
-
-                                <!-- Previous btn -->
-                                <button
-                                    :disabled="currentQuestionNumber === 1"
-                                    @click="
-                                        toggleQuestion(
-                                            currentQuestionNumber - 2
-                                        )
-                                    "
-                                    type="button"
-                                    class="btn btn-sm btn-primary border border-1 border-secondary me-1"
-                                >
-                                    Prev
-                                </button>
-
-                                <!-- Next btn -->
-                                <button
-                                    v-if="questionsRemaining"
-                                    :disabled="
-                                        currentQuestionNumber >=
-                                        questions.length
-                                    "
-                                    @click="
-                                        toggleQuestion(currentQuestionNumber)
-                                    "
-                                    type="button"
-                                    class="btn btn-sm btn-primary border border-1 border-secondary"
-                                >
-                                    Next
-                                </button>
                             </div>
+                        </td>
+                    </tr>
 
-                            <!-- TODO: FIX UP-->
-                            <span class="me-2 d-none">
-                                You're on question # {{ currentQuestionNumber }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
+                    <!-- Row 3 -->
+                </table>
+            </div>
 
+            <div class="container-fluid p-2">
                 <!-- Branding / Tagline -->
                 <div
                     data-role="branding"
-                    class="position-absolute container-fluid d-flex justify-content-end"
+                    class="container-fluid d-flex justify-content-end"
                 >
                     <div
                         class="branding p-2 small"
@@ -828,7 +908,7 @@ export default Ben
                     </div>
                 </div>
             </div>
-            <!-- End [data-type="question"] -->
+            <!-- End Table -->
         </div>
     </div>
 
@@ -875,22 +955,42 @@ export default Ben
 }
 
 #outerShell {
-    /* margin-top: 20px; */
-    /* max-width: 1000px; */
     align-self: center !important;
     border-radius: 10px;
     padding: 5px;
     position: relative;
     width: 100%;
 }
+.table-container {
+    border-radius: 5px;
+    border: 1px solid #999999;
+    background-color: rgba(255, 255, 255, 0.85);
+}
+.question-table {
+    padding-bottom: 40px;
+}
+[data-role='fader'] {
+    position: absolute;
+    top: 0px;
+    display: none;
+    width: 100%;
+    height: 200px;
+    background-color: rgba(255, 255, 255, 0);
+    border: 2px solid red;
+    z-index: 10;
+}
+[data-role='question-buttons'] {
+    margin-bottom: 25px;
+    border: 1px solid red !important;
+}
 
 [data-role='branding'] {
-    top: calc(100% - 50px);
+    top: calc(100% - 0px);
     z-index: 5;
 }
 
 .branding {
-    background-color: rgba(0, 0, 0, 0.75);
+    background-color: rgba(0, 0, 0, 0.85);
     color: #eeeeee;
     border-radius: 3px;
     display: block;
@@ -989,20 +1089,20 @@ mjx-container[display='true'] {
 /* --------------------------------------------------
 Question & question text
 -------------------------------------------------- */
+.verticalSpacer {
+    height: 300px;
+    width: 10px !important;
+    /* background-color: rgba(255, 255, 255, 0.85); */
+}
 [data-role='question-container'] {
     border-radius: 7px;
-    background-color: rgba(255, 255, 255, 0.85);
+
     /* min-height: 580px; */
-    margin-bottom: 55px;
+    /* margin-bottom: 55px; */
 }
 
 [data-role='question'] {
-    padding: 20px;
-    background-color: rgba(238, 238, 238, 0.75);
-    background-color: rgba(255, 255, 255, 0.85);
-    border: 1px solid #cccccc;
-    border-radius: 7px;
-    min-height: 350px;
+    padding: 20px 0px 20px 0px;
     position: relative;
 }
 [data-role='questionText'] {
@@ -1035,7 +1135,7 @@ Choices
     padding: 10px;
     background-color: rgba(238, 238, 238, 0.5);
     border-radius: 7px;
-    border: 1px solid #eeeeee;
+    border: 1px solid #cccccc;
     /* padding-bottom: 10px; */
 }
 
@@ -1070,10 +1170,14 @@ ul.choices {
 }
 
 [data-role='circleContainer'] {
-    padding: 0px 3px 0px 3px;
+    padding: 0px;
+    padding-right: 3px;
+    padding-left: 3px;
     margin-right: 1px;
     margin-bottom: 1px;
-    font-size: 0.75em;
+    vertical-align: middle;
+    font-size: 0.7em;
+    line-height: 1.4em;
     border: 1px solid rgba(177, 225, 255, 0);
 }
 [data-role='circleContainer'].selected {
