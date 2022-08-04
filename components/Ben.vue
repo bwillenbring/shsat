@@ -4,6 +4,10 @@ const Ben = {
         theme: {
             type: String,
             default: 'brooklyn',
+            validator: (value) => {
+                const allowedThemes = ['brooklyn', 'bronx', 'chinatown']
+                return allowedThemes.includes(value)
+            },
         },
         questionsURL: {
             type: String,
@@ -16,6 +20,7 @@ const Ben = {
             isMobile: false,
             w: window.innerWidth,
             h: window.innerHeight,
+            orientation: null,
             wrong: 0,
             right: 0,
             unanswered: 0,
@@ -40,7 +45,7 @@ const Ben = {
             tags: [],
             currentQuestion: {},
             currentlySelectedChoice: null,
-            blurb_app: `A free demo for parents and kids to try out.`,
+            blurb_app: `For parents and kids to try out.`,
             blurb_ben: `A NYC dad with kids at Hunter college HS and Brooklyn Tech.`,
         }
     },
@@ -60,8 +65,9 @@ const Ben = {
     },
     mounted() {
         // Detect if
-        this.detectMobile()
-        window.addEventListener('resize', this.detectMobile)
+        this.detectOrientation()
+        window.addEventListener('resize', this.detectOrientation)
+        screen.orientation.addEventListener('change', this.detectOrientation)
         let [jq, bs, bs_with_popper, popper, math1, math2, ax] = [
             'https://code.jquery.com/jquery-3.6.0.min.js',
             'https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css',
@@ -208,17 +214,25 @@ const Ben = {
                 })
             })
         },
-        detectMobile() {
-            let [w, h] = [window.outerWidth, window.outerHeight]
+        detectOrientation() {
+            // Detect and set orientation
+            const orientation =
+                (screen.orientation || {}).type ||
+                screen.mozOrientation ||
+                screen.msOrientation
+            this.orientation = orientation || null
+
+            // Detect and set isMobile, width, and height vars
             let r = new RegExp(
                 /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
             )
-
-            let m = r.test(navigator.userAgent)
-            this.isMobile = m
-            this.w = w
-            this.h = h
-            console.log(`w=${w}, h = ${h}, isMobile=${m}`)
+            // Set values
+            this.isMobile = r.test(navigator.userAgent)
+            this.w = window.outerWidth
+            this.h = window.outerHeight
+            console.log(
+                `w=${this.w}, h = ${this.h}, isMobile=${this.isMobile}, orientation=${this.orientation}`
+            )
             return true
         },
         getBlurb(b) {
@@ -528,6 +542,29 @@ const Ben = {
                 return null
             }
         },
+        getThemeStyles() {
+            if (!this.theme) return ''
+            // These are the background image urls
+            let urls = {
+                brooklyn:
+                    'https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/d591a691-11b3-46e2-963e-8bc94dd25ddb/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-biggie-bw.jpg',
+                bronx: 'https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/1621203066818-GOBFWTGXRUVP2VRSLZHG/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-bronx.jpg',
+                chinatown:
+                    'https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/1621810540000-9E8KGAUGA9KI8BKZDIOY/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-chinatown.jpg',
+            }
+            // Gradient color inflection points
+            let gradient = [
+                'rgba(255, 255, 255, 0.15) 0%',
+                'rgba(255, 255, 255, 0.95) 20%',
+                'rgba(255, 255, 255, 0.95) 70%',
+                'rgba(255, 255, 255, 0.25) 90%',
+                'rgba(255, 255, 255, 0.15) 100%',
+            ]
+            // Return a string
+            return `background-image: linear-gradient(to bottom, ${gradient.join(
+                ', '
+            )}), url(${urls[this.theme]})`
+        },
         getClassFor({ el = null, params = {} } = {}) {
             switch (el) {
                 case 'choice':
@@ -592,7 +629,8 @@ export default Ben
         <div
             id="outerShell"
             v-show="loaded"
-            :class="`position-relative container-fluid m-1 border border-4 border-secondary theme_${theme}`"
+            :style="getThemeStyles()"
+            :class="`position-relative container-fluid m-1 border border-4 border-secondary theme`"
         >
             <!-- Fader -->
             <div data-role="fader"></div>
@@ -801,6 +839,7 @@ export default Ben
                                                     <div
                                                         class="badge badge-pill text-bg-danger me-1"
                                                         data-bs-toggle="tooltip"
+                                                        data-bs-delay='{ "show": 0, "hide": 0 }'
                                                         data-bs-title="Total incorrectly answered questions"
                                                     >
                                                         {{ wrong }}
@@ -888,6 +927,7 @@ export default Ben
                             <div
                                 data-bs-toggle="tooltip"
                                 data-bs-html="true"
+                                data-bs-custom-class="wide"
                                 data-bs-delay='{"show":0,"hide":0}'
                                 :data-bs-title="getBlurb('app').html"
                                 class="d-inline-block pe-2 border border-1 border-top-0 border-bottom-0 border-start-0 border-secondary"
@@ -901,6 +941,7 @@ export default Ben
                             <div
                                 data-bs-toggle="tooltip"
                                 data-bs-html="true"
+                                data-bs-custom-class="wide"
                                 data-bs-delay='{"show":0,"hide":0}'
                                 :data-bs-title="getBlurb('ben').html"
                                 class="ps-2 d-inline-block"
@@ -940,6 +981,7 @@ export default Ben
         display: none !important;
     }
 }
+
 @media print {
     /** This ensures the screen stuff is not printed */
     #outerShell {
@@ -983,7 +1025,7 @@ export default Ben
 }
 
 .branding {
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: rgba(0, 0, 0, 1);
     color: #eeeeee;
     border-radius: 3px;
     display: block;
@@ -1017,7 +1059,7 @@ export default Ben
 }
 
 [data-role='print-question'] {
-    display: block !important;
+    display: block;
     border: 1px solid #eeeeee;
     page-break-inside: avoid;
     margin-top: 20px;
@@ -1037,24 +1079,42 @@ mjx-container[display='true'] {
     font-size: 1.3em !important;
 }
 
-/* Tooltips */
-/* .tooltip {
+/* The part you actually see */
+.tooltip-inner {
+    /* These style the inside of the tooltip (the contents) */
+    padding: 7px !important;
+    text-align: left !important;
+    background-color: #607eaa !important;
+    opacity: 1;
+}
+
+.tooltip .tooltip-arrow::before {
+    /* These 5 lines are necessary for coloring the tooltip arrow #607eaa*/
+    color: #607eaa !important;
+    border-bottom-color: #607eaa !important;
+    border-top-color: #607eaa !important;
+    border-width: 6px 6px 0 !important;
+    z-index: -1 !important;
+}
+
+/** Custom Tooltips with `data-bs-custom-class` like this:
+    <div
+        data-bs-toggle="tooltip"
+        data-bs-custom-class="wide"
+        data-bs-title="Here is a custom tooltip">Hi there!</div>
+
+    Note: `.wide` is the outer element. So... 👇🏽
+ */
+
+/* Make the custom tooltip fully opaque */
+.wide {
     opacity: 1 !important;
 }
-.tooltip-inner {
-    background-color: rgba(185, 177, 255, 0.95) !important;
-    min-width: 300px !important;
-}
-.tooltip-arrow {
-    background-color: rgba(185, 177, 255, 0.95) !important;
-}
-*/
-.custom-tooltip,
-.wide,
-.wide > .tooltip-inner {
-    border: 2px solid yellow !important;
+/* Make the custom tooltip wide */
+.tooltip .wide .tooltip-inner {
     min-width: 300px;
 }
+/* .tooltip wide bs-tooltip-auto fade show */
 
 .tooltip-inner {
     min-width: 290px;
@@ -1201,44 +1261,18 @@ Buttons
     background-color: rgba(206, 227, 227, 1);
     color: #222222;
 }
-
-.theme_brooklyn,
-.theme_bronx,
-.theme_chinatown {
+.theme {
+    background-color: #eeeeee;
     background-image: linear-gradient(
-            to bottom,
-            rgba(255, 255, 255, 0.15) 0%,
-            rgba(255, 255, 255, 0.95) 20%,
-            rgba(255, 255, 255, 0.95) 70%,
-            rgba(255, 255, 255, 0.25) 90%,
-            rgba(255, 255, 255, 0.15) 100%
-        ),
-        url(https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/d591a691-11b3-46e2-963e-8bc94dd25ddb/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-biggie-bw.jpg);
+        to bottom,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.95) 20%,
+        rgba(255, 255, 255, 0.95) 70%,
+        rgba(255, 255, 255, 0.25) 90%,
+        rgba(255, 255, 255, 0.15) 100%
+    );
     background-size: cover;
     background-position-x: right;
     background-position-y: bottom;
-}
-
-.theme_bronx {
-    background-image: linear-gradient(
-            to bottom,
-            rgba(255, 255, 255, 0.15) 0%,
-            rgba(255, 255, 255, 0.95) 20%,
-            rgba(255, 255, 255, 0.95) 70%,
-            rgba(255, 255, 255, 0.25) 90%,
-            rgba(255, 255, 255, 0.15) 100%
-        ),
-        url(https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/1621203066818-GOBFWTGXRUVP2VRSLZHG/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-bronx.jpg);
-}
-.theme_chinatown {
-    background-image: linear-gradient(
-            to bottom,
-            rgba(255, 255, 255, 0.15) 0%,
-            rgba(255, 255, 255, 0.95) 20%,
-            rgba(255, 255, 255, 0.95) 70%,
-            rgba(255, 255, 255, 0.25) 90%,
-            rgba(255, 255, 255, 0.15) 100%
-        ),
-        url(https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/1621810540000-9E8KGAUGA9KI8BKZDIOY/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-chinatown.jpg);
 }
 </style>
