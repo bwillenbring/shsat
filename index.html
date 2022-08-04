@@ -116,6 +116,9 @@
             // template: `<shsat questionsArray='${q}'></shsat>`,
 
             // --------------------------------------------------
+            const theme =
+                new URLSearchParams(window.location.search).get('theme') ||
+                'chinatown'
 
             const app = Vue.createApp({
                 components: {
@@ -123,7 +126,7 @@
                         loadModule('./components/Ben.vue', options)
                     ),
                 },
-                template: `<shsat></shsat>`,
+                template: `<shsat theme="${theme}"></shsat>`,
             })
 
             app.mount('#app')
