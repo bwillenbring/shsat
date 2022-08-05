@@ -114,9 +114,9 @@ const Ben = {
         })
 
         // Masonry
-        this.insertDependency({
-            src: 'https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js',
-        })
+        // this.insertDependency({
+        //     src: 'https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js',
+        // })
 
         // MathJax
         this.insertDependency({
