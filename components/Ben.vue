@@ -218,11 +218,17 @@ const Ben = {
         },
         detectOrientation() {
             // Detect and set orientation
-            const orientation =
-                (screen.orientation || {}).type ||
-                screen.mozOrientation ||
-                screen.msOrientation
-            this.orientation = orientation || null
+            let o
+            try {
+                o =
+                    (screen.orientation || {}).type ||
+                    screen.mozOrientation ||
+                    screen.msOrientation
+            } catch (err) {
+                o = ''
+            }
+
+            this.orientation = o
 
             // Detect and set isMobile, width, and height vars
             let r = new RegExp(
