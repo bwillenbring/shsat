@@ -47,6 +47,8 @@ const Ben = {
             currentlySelectedChoice: null,
             blurb_app: `For parents and kids to try out.`,
             blurb_ben: `A NYC dad with kids at Hunter college HS and Brooklyn Tech.`,
+            blurb_version:
+                '9b6ca21 — Last updated August 4, 2022. More updates to come.',
         }
     },
     computed: {
@@ -388,11 +390,6 @@ const Ben = {
              */
             let questionsAsParams = this.getQuestionsFromParams()
             if (this.questionsURL || questionsAsParams) {
-                // Favor this.questionsURL (prop) over questionsAsParams (querystring)
-                // let q_url = this.questionsURL
-                //     ? this.questionsURL
-                //     : questionsAsParams
-
                 // Favor querystring
                 let q_url = questionsAsParams
                     ? questionsAsParams
@@ -922,6 +919,19 @@ export default Ben
                         class="branding p-2 small"
                         style="font-weight: 500; font-size: 11px"
                     >
+                        <!-- Version info -->
+                        <a :href="getBlurb('app').link" target="_blank">
+                            <div
+                                data-bs-toggle="tooltip"
+                                data-bs-html="true"
+                                data-bs-delay='{"show":0,"hide":0}'
+                                :data-bs-title="blurb_version"
+                                class="d-inline-block pe-2 border border-1 border-top-0 border-bottom-0 border-start-0 border-secondary"
+                            >
+                                Version info
+                            </div>
+                        </a>
+
                         <!-- About the app -->
                         <a :href="getBlurb('app').link" target="_blank">
                             <div
@@ -930,7 +940,7 @@ export default Ben
                                 data-bs-custom-class="wide"
                                 data-bs-delay='{"show":0,"hide":0}'
                                 :data-bs-title="getBlurb('app').html"
-                                class="d-inline-block pe-2 border border-1 border-top-0 border-bottom-0 border-start-0 border-secondary"
+                                class="d-inline-block ps-2 pe-2 border border-1 border-top-0 border-bottom-0 border-start-0 border-secondary"
                             >
                                 About this demo
                             </div>
@@ -1107,6 +1117,7 @@ mjx-container[display='true'] {
  */
 
 /* Make the custom tooltip fully opaque */
+.tooltip,
 .wide {
     opacity: 1 !important;
 }
