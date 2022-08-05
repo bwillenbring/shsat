@@ -69,7 +69,8 @@ const Ben = {
         // Detect if
         this.detectOrientation()
         window.addEventListener('resize', this.detectOrientation)
-        screen.orientation.addEventListener('change', this.detectOrientation)
+        // This event listener breaks iphone
+        // screen.orientation.addEventListener('change', this.detectOrientation)
         let [jq, bs, bs_with_popper, popper, math1, math2, ax] = [
             'https://code.jquery.com/jquery-3.6.0.min.js',
             'https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css',
@@ -227,6 +228,8 @@ const Ben = {
             } catch (err) {
                 o = ''
             }
+
+            o = undefined === o ? '' : o
 
             this.orientation = o
 
@@ -788,7 +791,7 @@ export default Ben
                                     >
                                         <!-- Circles -->
                                         <div
-                                            :class="w < 500 ? 'd-none' : 'col'"
+                                            :class="w < 650 ? 'd-none' : 'col'"
                                         >
                                             <div
                                                 data-role="circleContainer"
