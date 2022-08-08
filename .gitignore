@@ -1,3 +1,18 @@
+# Design Assets 
+design_assets
+notes
+
+# Any temp files
+**/000*
+**/junk*
+**/test*
+**/*.BAK
+
+# All html except index
+*.html 
+!index.html
+
+
 # Logs
 logs
 *.log
