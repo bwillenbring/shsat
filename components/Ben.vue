@@ -1230,7 +1230,7 @@ export default Ben
     position: relative;
     /* width: 100%; */
     max-width: 960px;
-    margin-top: 50px !important;
+    /* margin-top: 50px !important; */
 }
 .table-container {
     border-radius: 5px;
