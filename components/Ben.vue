@@ -51,7 +51,7 @@ const Ben = {
             blurb_app: `For parents and kids to try out.`,
             blurb_ben: `A NYC dad with kids at Hunter college HS and Brooklyn Tech.`,
             blurb_version:
-                '9b6ca21 — Last updated August 4, 2022. More updates to come.',
+                '6dba1ee — Last updated August 10, 2022. Theming, remote quizzes, misc. MathJax rendering fixes.',
             print: {
                 blurb_quiz_header: '😄 Remember, this is PRACTICE!',
                 directionsMultipleChoice:
