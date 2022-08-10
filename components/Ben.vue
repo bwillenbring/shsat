@@ -1,7 +1,7 @@
 <script>
 const Ben = {
     props: {
-        theme: {
+        initial_theme: {
             type: String,
             default: 'brooklyn',
             validator: (value) => {
@@ -17,6 +17,9 @@ const Ben = {
     },
     data() {
         return {
+            theme: null,
+            currentStyle: '',
+            testItems: new Array(10).fill('test item'),
             isMobile: false,
             w: window.innerWidth,
             h: window.innerHeight,
@@ -31,7 +34,7 @@ const Ben = {
             defaultQuestions: [
                 {
                     questionText:
-                        'If $x = -1$, what does $(x+1)^2$ evaluate to?',
+                        'If \\(x = -1\\), what does \\((x+1)^2\\) evaluate to?',
                     choices: [0, 1, 2, 3],
                     answer: 0,
                     tags: ['sample'],
@@ -49,9 +52,52 @@ const Ben = {
             blurb_ben: `A NYC dad with kids at Hunter college HS and Brooklyn Tech.`,
             blurb_version:
                 '9b6ca21 — Last updated August 4, 2022. More updates to come.',
+            print: {
+                blurb_quiz_header: '😄 Remember, this is PRACTICE!',
+                directionsMultipleChoice:
+                    "Eliminate bad choices. Skip over hard questions and come back to them later. Figure out what is being asked. <u>You've got this!</u>",
+            },
+            themes: {
+                brooklyn: {
+                    name: 'brooklyn',
+                    blurb: '<b>Brooklyn</b>—Home of Dr. Anthony Fauci and the late Justice RBG 👑.',
+                    url: 'https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/d591a691-11b3-46e2-963e-8bc94dd25ddb/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-biggie-bw.jpg',
+                },
+                chinatown: {
+                    name: 'chinatown',
+                    blurb: '<b>Chinatown</b>—Home of Confucius Plaza, PS 130, Jacob Riis, and the Seaport.',
+                    url: 'https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/1621810540000-9E8KGAUGA9KI8BKZDIOY/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-chinatown.jpg',
+                },
+                bronx: {
+                    name: 'bronx',
+                    blurb: '<b>Bronx</b>—Home of the New York Yankees, J-Lo, and Supreme Court Justice Sonia Sotomayor! 🇵🇷',
+                    url: 'https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/1621203066818-GOBFWTGXRUVP2VRSLZHG/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-bronx.jpg',
+                },
+            },
         }
     },
     computed: {
+        questionRows: function () {
+            let rows = []
+            for (let q of this.questions) {
+                // let idx = this.questions.indexOf(q)
+                // let idx = this.questions.indexOf(q)
+                let idx = q.idx
+                let is_even = idx % 2 === 0
+                let l = idx
+
+                if (is_even) {
+                    // Create a new row
+
+                    let items = [q]
+                    if (this.questions[idx + 1]) {
+                        items.push(this.questions[idx + 1])
+                    }
+                    rows.push(items)
+                }
+            }
+            return rows
+        },
         currentQuestionNumber: function () {
             if (this.questions && Array.isArray(this.questions)) {
                 return this.questions.indexOf(this.currentQuestion) + 1
@@ -66,6 +112,7 @@ const Ben = {
         },
     },
     mounted() {
+        this.setTheme(this.initial_theme)
         // Detect if
         this.detectOrientation()
         window.addEventListener('resize', this.detectOrientation)
@@ -141,6 +188,14 @@ const Ben = {
         })
     },
     watch: {
+        theme: function (a, b) {
+            // Trigger the change in the outershell
+            // a is the new value
+            if (a !== b && a !== null) {
+                let styles = this.getThemeStyles(a)
+                this.currentStyle = styles
+            }
+        },
         questions: function (a, b) {
             // Always when a change occurs set to false
             if (a !== b) {
@@ -170,6 +225,9 @@ const Ben = {
         },
     },
     methods: {
+        createPrintQuestionCopy(q) {
+            return JSON.parse(JSON.stringify(q))
+        },
         fade(idx = 0) {
             let {
                 questionText = null,
@@ -275,7 +333,6 @@ const Ben = {
             const tooltipList = [...tooltipTriggerList].map(
                 (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
             )
-            console.log('popper!!!!!')
         },
         getQuestionsFromParams(param = 'quiz') {
             try {
@@ -290,7 +347,7 @@ const Ben = {
                     jsonFile = `${jsonFile}.json`
                 }
 
-                return jsonFile
+                return `${jsonFile}?t=${this.getTimestamp()}`
             } catch (err) {
                 return null
             }
@@ -333,10 +390,27 @@ const Ben = {
             if (typeof val === 'string') {
                 return val
             } else if (typeof val === 'number') {
-                return `$${val}$`
+                // Don't hardcode the delimiter
+                return val
+                // return `\\(${val}\\)`
             } else {
                 return ''
             }
+        },
+        formatPrintChoices(choices) {
+            const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+
+            let displayChoices = choices.map((ch) => {
+                let idx = choices.indexOf(ch)
+
+                return `<div data-role="print-choice" class="container"><span data-role="print-choice-letter" class="fw-bold me-1">${letters[
+                    idx
+                ].toUpperCase()}.</span>${ch}</div>`
+            })
+
+            let cola = displayChoices.splice(0, 2).join('\n')
+            let colb = displayChoices.splice(0, 2).join('\n')
+            return `<div class="container-fluid"><div data-role="print-choices" class="row"><div class="col-6">${cola}</div><div class="col-6">${colb}</div></div></div>`
         },
         formatTags(tags) {
             let defaultTags = []
@@ -363,6 +437,9 @@ const Ben = {
             }
             return ''
         },
+        getTimestamp() {
+            return new Date().getTime()
+        },
         increment(arg = 1) {
             this.count++
         },
@@ -376,7 +453,7 @@ const Ben = {
         },
         renderMath(attempts = 1) {
             attempts++
-            MathJax.typesetPromise().then((r) => console.log(r))
+            MathJax.typesetPromise().then((r) => console.log('Math rendered!'))
         },
         displayQuestion(idx) {
             if (idx >= 0 && idx < this.questions.length) {
@@ -514,6 +591,7 @@ const Ben = {
             }
         },
         selectChoice(userChoice) {
+            console.log(`User is selecting ${userChoice}`)
             // What's the currentQuestion
             let q = this.currentQuestion
             // Persist the user's selection for the current question
@@ -548,28 +626,48 @@ const Ben = {
                 return null
             }
         },
-        getThemeStyles() {
-            if (!this.theme) return ''
-            // These are the background image urls
-            let urls = {
-                brooklyn:
-                    'https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/d591a691-11b3-46e2-963e-8bc94dd25ddb/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-biggie-bw.jpg',
-                bronx: 'https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/1621203066818-GOBFWTGXRUVP2VRSLZHG/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-bronx.jpg',
-                chinatown:
-                    'https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/1621810540000-9E8KGAUGA9KI8BKZDIOY/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-chinatown.jpg',
+        setTheme(th) {
+            // Only do something if the current theme is the them, do nothing
+
+            if (this.theme !== th && Object.keys(this.themes).includes(th)) {
+                this.theme = th
             }
+        },
+        getThemeStyles(th, thumbnail = false) {
+            if (!this.theme) return ''
             // Gradient color inflection points
+            let gradientColor =
+                theme === 'brooklyn' ? `255, 255, 255` : '0, 0, 0'
             let gradient = [
-                'rgba(255, 255, 255, 0.15) 0%',
-                'rgba(255, 255, 255, 0.95) 20%',
-                'rgba(255, 255, 255, 0.95) 70%',
-                'rgba(255, 255, 255, 0.25) 90%',
-                'rgba(255, 255, 255, 0.15) 100%',
+                `rgba(${gradientColor}, 0.15) 0%`,
+                `rgba(${gradientColor}, 0.95) 20%`,
+                `rgba(${gradientColor}, 0.95) 70%`,
+                `rgba(${gradientColor}, 0.25) 90%`,
+                `rgba(${gradientColor}, 0.15) 100%`,
             ]
+
             // Return a string
-            return `background-image: linear-gradient(to bottom, ${gradient.join(
+            let available_themes = Object.keys(this.themes)
+            if (!th || !available_themes.includes(th)) {
+                th = 'brooklyn'
+            }
+
+            let bg_img = this.themes[th].url
+            let gradient_css = `linear-gradient(to bottom, ${gradient.join(
                 ', '
-            )}), url(${urls[this.theme]})`
+            )})`
+            if (thumbnail !== true) {
+                return `background-image: ${gradient_css}, url(${bg_img})`
+            } else {
+                // thumbnail
+                // let borderColor = th === 'brooklyn' ? '#CCCCCC' : '#333333'
+                let borderColor = '#CCCCCC'
+                let opacity = `opacity: .5`
+                if (th === this.theme) {
+                    opacity = `opacity: 1`
+                }
+                return `border-color: ${borderColor}; ${opacity}; height:60px; background-image: url(${bg_img});`
+            }
         },
         getClassFor({ el = null, params = {} } = {}) {
             switch (el) {
@@ -635,7 +733,7 @@ export default Ben
         <div
             id="outerShell"
             v-show="loaded"
-            :style="getThemeStyles()"
+            :style="currentStyle"
             :class="`position-relative container-fluid m-1 border border-4 border-secondary theme`"
         >
             <!-- Fader -->
@@ -797,6 +895,12 @@ export default Ben
                                                 data-role="circleContainer"
                                                 v-for="q in questions"
                                                 :key="questions.indexOf(q)"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-custom-class="wide"
+                                                data-bs-html="true"
+                                                :data-bs-title="`<b>#${
+                                                    q.idx + 1
+                                                }.)</b> ${q.questionText}`"
                                                 @click="
                                                     toggleQuestion(
                                                         questions.indexOf(q)
@@ -841,7 +945,7 @@ export default Ben
                                                 <div
                                                     class="rounded-1 me-1 small p-1"
                                                 >
-                                                    <!-- <span class="me-2">Progress:</span> -->
+                                                    <!-- Progress: Wrong  -->
                                                     <div
                                                         class="badge badge-pill text-bg-danger me-1"
                                                         data-bs-toggle="tooltip"
@@ -918,56 +1022,76 @@ export default Ben
                 </table>
             </div>
 
-            <div class="container-fluid p-2">
+            <div class="container-fluid p-2 pb-1">
                 <!-- Branding / Tagline -->
                 <div
                     data-role="branding"
                     class="container-fluid d-flex justify-content-end"
                 >
+                    <!-- Themes -->
                     <div
-                        class="branding p-2 small"
+                        class="d-flex pe-2 justify-content-end themeContainer border border-0 border-light col text-align-center"
+                        v-if="w >= 780"
+                    >
+                        <!-- Show each theme -->
+                        <div
+                            v-for="th in themes"
+                            @click="setTheme(th.name)"
+                            class="theme_thumbnail"
+                            data-bs-toggle="tooltip"
+                            data-bs-html="true"
+                            :data-bs-title="th.blurb"
+                            :style="getThemeStyles(th.name, true)"
+                        ></div>
+                    </div>
+                    <!-- Branding -->
+                    <div
+                        class="branding align-self-center"
                         style="font-weight: 500; font-size: 11px"
                     >
                         <!-- Version info -->
-                        <a :href="getBlurb('app').link" target="_blank">
-                            <div
-                                data-bs-toggle="tooltip"
-                                data-bs-html="true"
-                                data-bs-delay='{"show":0,"hide":0}'
-                                :data-bs-title="blurb_version"
-                                class="d-inline-block pe-2 border border-1 border-top-0 border-bottom-0 border-start-0 border-secondary"
-                            >
-                                Version info
-                            </div>
-                        </a>
+                        <div class="d-inline-block about-links">
+                            <a :href="getBlurb('app').link" target="_blank">
+                                <div
+                                    data-bs-toggle="tooltip"
+                                    data-bs-html="true"
+                                    data-bs-delay='{"show":0,"hide":0}'
+                                    data-bs-custom-class="wide"
+                                    :data-bs-title="blurb_version"
+                                    class="d-inline-block pe-2 border border-1 border-top-0 border-bottom-0 border-start-0 border-secondary"
+                                >
+                                    Version info
+                                </div>
+                            </a>
 
-                        <!-- About the app -->
-                        <a :href="getBlurb('app').link" target="_blank">
-                            <div
-                                data-bs-toggle="tooltip"
-                                data-bs-html="true"
-                                data-bs-custom-class="wide"
-                                data-bs-delay='{"show":0,"hide":0}'
-                                :data-bs-title="getBlurb('app').html"
-                                class="d-inline-block ps-2 pe-2 border border-1 border-top-0 border-bottom-0 border-start-0 border-secondary"
-                            >
-                                About this demo
-                            </div>
-                        </a>
+                            <!-- About the app -->
+                            <a :href="getBlurb('app').link" target="_blank">
+                                <div
+                                    data-bs-toggle="tooltip"
+                                    data-bs-html="true"
+                                    data-bs-custom-class="wide"
+                                    data-bs-delay='{"show":0,"hide":0}'
+                                    :data-bs-title="getBlurb('app').html"
+                                    class="d-inline-block ps-2 pe-2 border border-1 border-top-0 border-bottom-0 border-start-0 border-secondary"
+                                >
+                                    About this demo
+                                </div>
+                            </a>
 
-                        <!-- About ben -->
-                        <a :href="getBlurb('ben').link" target="_blank">
-                            <div
-                                data-bs-toggle="tooltip"
-                                data-bs-html="true"
-                                data-bs-custom-class="wide"
-                                data-bs-delay='{"show":0,"hide":0}'
-                                :data-bs-title="getBlurb('ben').html"
-                                class="ps-2 d-inline-block"
-                            >
-                                About Ben
-                            </div>
-                        </a>
+                            <!-- About ben -->
+                            <a :href="getBlurb('ben').link" target="_blank">
+                                <div
+                                    data-bs-toggle="tooltip"
+                                    data-bs-html="true"
+                                    data-bs-custom-class="wide"
+                                    data-bs-delay='{"show":0,"hide":0}'
+                                    :data-bs-title="getBlurb('ben').html"
+                                    class="ps-2 d-inline-block"
+                                >
+                                    About Ben
+                                </div>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -976,19 +1100,79 @@ export default Ben
     </div>
 
     <!-- FOR PRINT -->
-
-    <div
-        data-role="print"
-        class="row"
-        data-masonry='{"percentPosition": true }'
-        style="position: relative; border: 2px solid grey"
-    >
-        <!-- Iterate over each question -->
-        <div v-for="q in questions" class="card" data-role="print-question">
-            <div class="col-sm-6 col-lg-4 mb-4">
-                <div class="card border border-1 border-secondary">
-                    question
+    <table data-role="print">
+        <thead data-role="print-header">
+            <th class="text-bg-light p-4 ps-0">
+                <!-- <div class="h1"></div> -->
+                <div class="fs-6 fw-normal">
+                    <b>{{ print.blurb_quiz_header }}</b
+                    >—<span v-html="print.directionsMultipleChoice"></span>
                 </div>
+            </th>
+        </thead>
+        <tr
+            v-for="row of questionRows"
+            data-role="print-question-row"
+            class="row"
+            :key="`row_${questionRows.indexOf(row)}`"
+        >
+            <td
+                v-for="item of row"
+                :key="`row_${questionRows.indexOf(row)}_item_${row.indexOf(
+                    item
+                )}`"
+                data-role="print-question"
+                class="col-6"
+                :style="
+                    item.idx % 2 === 0
+                        ? 'border-right:2px solid #999999;padding-right:25px;'
+                        : 'width:49%;'
+                "
+            >
+                <!-- Print Question -->
+                <div class="d-flex">
+                    <!-- Print Question #-->
+                    <div class="inline-block me-3 h-2 fw-bold">
+                        {{ item.idx + 1 }}.
+                    </div>
+                    <div>
+                        <!-- Print Question Text -->
+                        <div class="h-6" v-html="item.questionText"></div>
+                        <!-- Print Choices -->
+                        <div
+                            data-role="print-choice-container"
+                            class="align-self-start"
+                        >
+                            <div
+                                class="printChoices align-self-start"
+                                v-html="formatPrintChoices(item.choices)"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <div
+        data-role="answerKeyContainer"
+        class="p-4 container-fluid border border-1 border-secondary rounded-2"
+    >
+        <div class="fs-4 p-4 ps-2">
+            Answer Key—currently upside down
+            <div class="d-inline-block upside-down">🤣</div>
+        </div>
+        <div
+            data-role="answerKey"
+            class="d-flex align-content-end flex-wrap upside-down"
+        >
+            <div
+                v-for="q in questions"
+                :key="`answer_${q.idx}`"
+                class="d-inline-block p-2 m-2 ms-0 mb-0 border border-1 border-secondary rounded-2 flex-fill"
+                style=""
+            >
+                <span class="me-2 fw-bold">[#{{ q.idx + 1 }}] </span>
+                <span class="small" v-html="q.answer"></span>
             </div>
         </div>
     </div>
@@ -996,7 +1180,8 @@ export default Ben
 
 <style>
 @media screen {
-    [data-role='print'] {
+    [data-role='print'],
+    [data-role='answerKeyContainer'] {
         display: none !important;
     }
 }
@@ -1007,21 +1192,54 @@ export default Ben
         display: none;
     }
 }
+[data-role='print-header'] {
+    border-bottom: 4px solid #757575;
+}
+
+/* 
+[data-role='print-choice-container'] {
+    border: 2px solid red; 
+} 
+*/
+
+[data-role='print-choices'] {
+    padding-top: 5px;
+    /* border: 2px solid rgba(0, 0, 0, 0.05); */
+    background-color: #eeeeee;
+    border-radius: 3px;
+    margin-top: 15px !important;
+    margin-bottom: 10px !important;
+}
+
+[data-role='print-choice'] {
+    /* margin-right: 5px;
+    border: 0px solid pink;
+    padding-right: 10px; */
+    padding-bottom: 10px;
+}
+
+[data-role='print-choice']:last-child {
+    margin-right: 0px;
+    padding-right: 0px;
+}
 
 #outerShell {
     align-self: center !important;
     border-radius: 10px;
     padding: 5px;
     position: relative;
-    width: 100%;
+    /* width: 100%; */
+    max-width: 960px;
+    margin-top: 50px !important;
 }
 .table-container {
     border-radius: 5px;
     border: 1px solid #999999;
-    background-color: rgba(255, 255, 255, 0.85);
+    background-color: rgba(255, 255, 255, 0.9);
 }
 .question-table {
     padding-bottom: 40px;
+    /* background-color: #999999; */
 }
 [data-role='fader'] {
     position: absolute;
@@ -1038,16 +1256,24 @@ export default Ben
     border: 1px solid red !important;
 }
 
+/*
 [data-role='branding'] {
     top: calc(100% - 0px);
-    z-index: 5;
+    z-index: 5; 
 }
+*/
 
 .branding {
+    /* background-color: rgba(0, 0, 0, 1); */
+    color: #eeeeee;
+    border-radius: 3px;
+    vertical-align: middle;
+}
+.about-links {
+    padding: 5px 15px 5px 15px;
     background-color: rgba(0, 0, 0, 1);
     color: #eeeeee;
     border-radius: 3px;
-    display: block;
 }
 
 [data-role='board'] {
@@ -1077,14 +1303,29 @@ export default Ben
     margin: 0px;
 }
 
-[data-role='print-question'] {
+[data-role='print-question-row'] {
     display: block;
-    border: 1px solid #eeeeee;
+    border-bottom: 2px solid #222222;
     page-break-inside: avoid;
-    margin-top: 20px;
+    margin-top: 40px;
+}
+[data-role='print-question'] {
+    padding-right: 15px;
+    padding-top: 15px;
+    /* border-right: 7px solid #222222; */
 }
 [data-role='print-question']:nth-of-type(1) {
     margin-top: 0px;
+}
+
+[data-role='answerKeyContainer'] {
+    page-break-inside: avoid;
+}
+[data-role='answerKey'] {
+    min-height: 85vh !important;
+}
+.upside-down {
+    transform: scale(-1, -1);
 }
 /* --------------------------------------------------
 Mathjax
@@ -1126,7 +1367,6 @@ mjx-container[display='true'] {
  */
 
 /* Make the custom tooltip fully opaque */
-.tooltip,
 .wide {
     opacity: 1 !important;
 }
@@ -1136,8 +1376,17 @@ mjx-container[display='true'] {
 }
 /* .tooltip wide bs-tooltip-auto fade show */
 
+/*
 .tooltip-inner {
-    min-width: 290px;
+    min-width: 290px; 
+}
+*/
+
+em,
+span.hilight {
+    font-weight: bold;
+    background-color: rgba(255, 255, 153, 0.5) !important;
+    border-bottom: 2px dashed rgba(255, 0, 0, 0.3);
 }
 </style>
 
@@ -1155,11 +1404,11 @@ Question & question text
     width: 10px !important;
     /* background-color: rgba(255, 255, 255, 0.85); */
 }
+.question-table {
+    background-color: #ffffff;
+}
 [data-role='question-container'] {
     border-radius: 7px;
-
-    /* min-height: 580px; */
-    /* margin-bottom: 55px; */
 }
 
 [data-role='question'] {
@@ -1294,5 +1543,27 @@ Buttons
     background-size: cover;
     background-position-x: right;
     background-position-y: bottom;
+}
+
+.theme_thumbnail {
+    display: inline-block;
+    max-width: 130px;
+    width: 120px;
+    height: 45px;
+    max-height: 80px;
+    border: 1px solid #cccccc;
+    border-radius: 3px;
+    position: relative;
+    background-size: cover;
+    background-position-x: right;
+    background-position-y: bottom;
+    margin-right: 25px;
+}
+.theme_thumbnail:last-child {
+    margin-right: 0px;
+}
+.theme_thumbnail:hover {
+    opacity: 1 !important;
+    cursor: pointer;
 }
 </style>
