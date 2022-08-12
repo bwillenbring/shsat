@@ -55,7 +55,7 @@ const Ben = {
             blurb_app: `For parents and kids to try out.`,
             blurb_ben: `A NYC dad with kids at Hunter college HS and Brooklyn Tech.`,
             blurb_version:
-                '6dba1ee — Last updated August 10, 2022. Theming, remote quizzes, misc. MathJax rendering fixes.',
+                '61c65c6 - Improvements to theming and printing. Better support for rendering math inside tooltips. Streamlined about links, and a couple more emojis...☠️ 🥟. Gotta have emojis.',
             print: {
                 blurb_quiz_header: '😄 Remember, this is PRACTICE!',
                 directionsMultipleChoice:
@@ -80,7 +80,7 @@ const Ben = {
 
                 les: {
                     name: 'les',
-                    blurb: 'Lower East Side—Aqua Best, WD-40 (back in the day), and CW Pencils (rip ☠️).',
+                    blurb: 'Lower East Side—Aqua Best, WD-50 (back in the day), and CW Pencils (rip ☠️).',
                     url: '/img/themes/loisaida.jpg',
                 },
                 chinatown2: {
