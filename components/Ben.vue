@@ -70,7 +70,7 @@ const Ben = {
                 chinatown: {
                     name: 'chinatown',
                     blurb: '<b>Chinatown</b>—Home of Confucius Plaza, PS 130, Jacob Riis, and $1.50 dumplings (still 🥟).',
-                    url: '/img/themes/chinatown2.jpg',
+                    url: './img/themes/chinatown2.jpg',
                 },
                 bronx: {
                     name: 'bronx',
@@ -81,7 +81,7 @@ const Ben = {
                 les: {
                     name: 'les',
                     blurb: 'Lower East Side—Aqua Best, WD-50 (back in the day), and CW Pencils (rip ☠️).',
-                    url: '/img/themes/loisaida.jpg',
+                    url: './img/themes/loisaida.jpg',
                 },
                 chinatown2: {
                     name: 'chinatown2',
