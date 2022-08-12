@@ -17,7 +17,10 @@ const Ben = {
     },
     data() {
         return {
+            initialTimestamp: new Date().getTime(),
             theme: null,
+            defaultTheme: 'brooklyn',
+            theme_is_set: false,
             currentStyle: '',
             testItems: new Array(10).fill('test item'),
             isMobile: false,
@@ -48,6 +51,7 @@ const Ben = {
             tags: [],
             currentQuestion: {},
             currentlySelectedChoice: null,
+            blurb_about: `SHSAT prep—for parents and kids to try out. Made by a NYC dad.`,
             blurb_app: `For parents and kids to try out.`,
             blurb_ben: `A NYC dad with kids at Hunter college HS and Brooklyn Tech.`,
             blurb_version:
@@ -65,18 +69,42 @@ const Ben = {
                 },
                 chinatown: {
                     name: 'chinatown',
-                    blurb: '<b>Chinatown</b>—Home of Confucius Plaza, PS 130, Jacob Riis, and the Seaport.',
-                    url: 'https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/1621810540000-9E8KGAUGA9KI8BKZDIOY/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-chinatown.jpg',
+                    blurb: '<b>Chinatown</b>—Home of Confucius Plaza, PS 130, Jacob Riis, and $1.50 dumplings (still 🥟).',
+                    url: '/img/themes/chinatown2.jpg',
                 },
                 bronx: {
                     name: 'bronx',
                     blurb: '<b>Bronx</b>—Home of the New York Yankees, J-Lo, and Supreme Court Justice Sonia Sotomayor! 🇵🇷',
                     url: 'https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/1621203066818-GOBFWTGXRUVP2VRSLZHG/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-bronx.jpg',
                 },
+
+                les: {
+                    name: 'les',
+                    blurb: 'Lower East Side—Aqua Best, WD-40 (back in the day), and CW Pencils (rip ☠️).',
+                    url: '/img/themes/loisaida.jpg',
+                },
+                chinatown2: {
+                    name: 'chinatown2',
+                    blurb: '<b>Chinatown</b>—Home of Confucius Plaza, PS 130, Jacob Riis, and the Seaport.',
+                    url: 'https://images.squarespace-cdn.com/content/v1/5dabaee11e9d9809a8816556/1621810540000-9E8KGAUGA9KI8BKZDIOY/ke17ZwdGBToddI8pDm48kOyeI2mcCTajW7wMXBwmmj0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYy7Mythp_T-mtop-vrsUOmeInPi9iDjx9w8K4ZfjXt2dp-NHKnzrD7M1S1eExpO4HnV308_ZVFASBb2nRCc3RLGP7cJNZlDXbgJNE9ef52e8w/theme-chinatown.jpg',
+                },
             },
         }
     },
     computed: {
+        currentThemeThumbnailSrc: function () {
+            try {
+                return this.themes[this.theme].url
+            } catch (err) {
+                console.log(err)
+                return this.themes[this.defaultTheme].url
+            }
+        },
+        displayThemes: function () {
+            // Let's just show the FIRST 4
+            let arr = Object.entries(this.themes).slice(0, 4)
+            return Object.fromEntries(arr)
+        },
         questionRows: function () {
             let rows = []
             for (let q of this.questions) {
@@ -161,11 +189,6 @@ const Ben = {
             id: 'bss',
         })
 
-        // Masonry
-        // this.insertDependency({
-        //     src: 'https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js',
-        // })
-
         // MathJax
         this.insertDependency({
             src: math1,
@@ -186,6 +209,11 @@ const Ben = {
                 'sha512-odNmoc1XJy5x1TMVMdC7EMs3IVdItLPlCeL5vSUPN2llYKMJ2eByTTAIiiuqLg+GdNr9hF6z81p27DArRFKT7A==',
             fn: fn_axios,
         })
+
+        // Attach all event handlers
+        const THIS = this
+        const fn = () => THIS.setupHandlers()
+        setTimeout(fn, 1000)
     },
     watch: {
         theme: function (a, b) {
@@ -194,6 +222,8 @@ const Ben = {
             if (a !== b && a !== null) {
                 let styles = this.getThemeStyles(a)
                 this.currentStyle = styles
+                console.log(`new value for theme = ${a}, old value=${b}`)
+                this.theme_is_set = true
             }
         },
         questions: function (a, b) {
@@ -225,6 +255,28 @@ const Ben = {
         },
     },
     methods: {
+        setupHandlers() {
+            let navs = $(
+                '[data-role="circleContainer"][data-bs-toggle="tooltip"]'
+            )
+            // Add reference to this
+            const THIS = this
+            // Attach an event listener to each circle container (nav) element
+            navs.each(function () {
+                let ths = $(this).get(0)
+
+                ths.addEventListener('shown.bs.tooltip', function () {
+                    const fn = function () {
+                        $('.tooltip .menu-equation').css('opacity', 1)
+                    }
+                    THIS.renderMath(1, fn)
+                })
+            })
+            $("[data-toggle='tooltip']").on('show.bs.tooltip', function () {
+                console.log('Tooltip will be visible now.')
+            })
+            console.log('setup hanlders!')
+        },
         createPrintQuestionCopy(q) {
             return JSON.parse(JSON.stringify(q))
         },
@@ -306,6 +358,12 @@ const Ben = {
         },
         getBlurb(b) {
             switch (b) {
+                case 'about':
+                    return {
+                        link: 'https://www.ben-willenbring.com/shsat-back-story',
+                        html: `${this.blurb_about} Click to learn more.`,
+                    }
+                    break
                 case 'ben':
                 case 'author':
                     // about me
@@ -451,9 +509,15 @@ const Ben = {
             // Takes an index
             this.displayQuestion(idx)
         },
-        renderMath(attempts = 1) {
+        renderMath(attempts = 1, fn = null) {
             attempts++
-            MathJax.typesetPromise().then((r) => console.log('Math rendered!'))
+            MathJax.typesetPromise().then((r) => {
+                console.log('Math rendered!')
+                if (typeof fn === 'function') {
+                    console.log('Doing callback...')
+                    fn()
+                }
+            })
         },
         displayQuestion(idx) {
             if (idx >= 0 && idx < this.questions.length) {
@@ -627,10 +691,13 @@ const Ben = {
             }
         },
         setTheme(th) {
-            // Only do something if the current theme is the them, do nothing
-
-            if (this.theme !== th && Object.keys(this.themes).includes(th)) {
+            // Only do something if the current theme is not the theme, do nothing
+            if (Object.keys(this.themes).includes(th)) {
                 this.theme = th
+                console.log(`SETTING THEME TO ${th}`)
+            } else {
+                // Set the theme to the 1st theme
+                this.theme = this.defaultTheme
             }
         },
         getThemeStyles(th, thumbnail = false) {
@@ -652,15 +719,14 @@ const Ben = {
                 th = 'brooklyn'
             }
 
-            let bg_img = this.themes[th].url
+            let bg_img = this.themes[th].url ? this.themes[th].url : ''
+            bg_img += `?ts=${this.initialTimestamp}`
             let gradient_css = `linear-gradient(to bottom, ${gradient.join(
                 ', '
             )})`
             if (thumbnail !== true) {
                 return `background-image: ${gradient_css}, url(${bg_img})`
             } else {
-                // thumbnail
-                // let borderColor = th === 'brooklyn' ? '#CCCCCC' : '#333333'
                 let borderColor = '#CCCCCC'
                 let opacity = `opacity: .5`
                 if (th === this.theme) {
@@ -896,11 +962,14 @@ export default Ben
                                                 v-for="q in questions"
                                                 :key="questions.indexOf(q)"
                                                 data-bs-toggle="tooltip"
-                                                data-bs-custom-class="wide"
+                                                data-bs-delay='{ "show": 0, "hide": 0 }'
+                                                data-bs-custom-class="equation"
                                                 data-bs-html="true"
-                                                :data-bs-title="`<b>#${
+                                                :data-bs-title="`<span class='menu-equation']><b>#${
                                                     q.idx + 1
-                                                }.)</b> ${q.questionText}`"
+                                                }.)</b> ${
+                                                    q.questionText
+                                                }</span>`"
                                                 @click="
                                                     toggleQuestion(
                                                         questions.indexOf(q)
@@ -1035,10 +1104,11 @@ export default Ben
                     >
                         <!-- Show each theme -->
                         <div
-                            v-for="th in themes"
+                            v-for="th in displayThemes"
                             @click="setTheme(th.name)"
                             class="theme_thumbnail"
                             data-bs-toggle="tooltip"
+                            data-bs-custom-class="wide"
                             data-bs-html="true"
                             :data-bs-title="th.blurb"
                             :style="getThemeStyles(th.name, true)"
@@ -1064,31 +1134,17 @@ export default Ben
                                 </div>
                             </a>
 
-                            <!-- About the app -->
-                            <a :href="getBlurb('app').link" target="_blank">
+                            <!-- About -->
+                            <a :href="getBlurb('about').link" target="_blank">
                                 <div
                                     data-bs-toggle="tooltip"
                                     data-bs-html="true"
                                     data-bs-custom-class="wide"
                                     data-bs-delay='{"show":0,"hide":0}'
-                                    :data-bs-title="getBlurb('app').html"
-                                    class="d-inline-block ps-2 pe-2 border border-1 border-top-0 border-bottom-0 border-start-0 border-secondary"
-                                >
-                                    About this demo
-                                </div>
-                            </a>
-
-                            <!-- About ben -->
-                            <a :href="getBlurb('ben').link" target="_blank">
-                                <div
-                                    data-bs-toggle="tooltip"
-                                    data-bs-html="true"
-                                    data-bs-custom-class="wide"
-                                    data-bs-delay='{"show":0,"hide":0}'
-                                    :data-bs-title="getBlurb('ben').html"
+                                    :data-bs-title="getBlurb('about').html"
                                     class="ps-2 d-inline-block"
                                 >
-                                    About Ben
+                                    About
                                 </div>
                             </a>
                         </div>
@@ -1103,10 +1159,22 @@ export default Ben
     <table data-role="print">
         <thead data-role="print-header">
             <th class="text-bg-light p-4 ps-0">
-                <!-- <div class="h1"></div> -->
-                <div class="fs-6 fw-normal">
-                    <b>{{ print.blurb_quiz_header }}</b
-                    >—<span v-html="print.directionsMultipleChoice"></span>
+                <div class="d-flex align-items-center">
+                    <!-- Print Blurb Header -->
+                    <div class="fs-6 fw-normal pe-4">
+                        <b>{{ print.blurb_quiz_header }}</b
+                        >—<span v-html="print.directionsMultipleChoice"></span>
+                    </div>
+                    <!-- Print Theme (for Print) -->
+                    <div style="width: 150px !important">
+                        <!-- Show each theme -->
+                        <div v-if="theme_is_set === true">
+                            <img
+                                :src="currentThemeThumbnailSrc"
+                                class="img-thumbnail"
+                            />
+                        </div>
+                    </div>
                 </div>
             </th>
         </thead>
@@ -1196,10 +1264,10 @@ export default Ben
     border-bottom: 4px solid #757575;
 }
 
-/* 
+/*
 [data-role='print-choice-container'] {
-    border: 2px solid red; 
-} 
+    border: 2px solid red;
+}
 */
 
 [data-role='print-choices'] {
@@ -1259,7 +1327,7 @@ export default Ben
 /*
 [data-role='branding'] {
     top: calc(100% - 0px);
-    z-index: 5; 
+    z-index: 5;
 }
 */
 
@@ -1367,20 +1435,24 @@ mjx-container[display='true'] {
  */
 
 /* Make the custom tooltip fully opaque */
-.wide {
+.wide,
+.equation,
+.wide .tooltip-inner,
+.equation .tooltip-inner {
     opacity: 1 !important;
+}
+
+.tooltip .menu-equation mjx-container,
+.tooltip .menu-equation [jax='CHTML'] {
+    color: #fff89c;
 }
 /* Make the custom tooltip wide */
 .tooltip .wide .tooltip-inner {
     min-width: 300px;
 }
-/* .tooltip wide bs-tooltip-auto fade show */
-
-/*
-.tooltip-inner {
-    min-width: 290px; 
+.tooltip .menu-equation {
+    opacity: 0;
 }
-*/
 
 em,
 span.hilight {
@@ -1547,8 +1619,8 @@ Buttons
 
 .theme_thumbnail {
     display: inline-block;
-    max-width: 130px;
-    width: 120px;
+    max-width: 115px;
+    width: 105px;
     height: 45px;
     max-height: 80px;
     border: 1px solid #cccccc;
