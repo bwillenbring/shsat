@@ -55,7 +55,7 @@ const Ben = {
             blurb_app: `For parents and kids to try out.`,
             blurb_ben: `A NYC dad with kids at Hunter college HS and Brooklyn Tech.`,
             blurb_version:
-                '61c65c6 - Improvements to theming and printing. Better support for rendering math inside tooltips. Streamlined about links, and a couple more emojis...☠️ 🥟. Gotta have emojis.',
+                '5f006d2 - Updated 8/13/2022. Improvements to theming and printing. Better support for rendering math in tooltips. Streamlined about links, and more emojis...✏️ ☠️ 🥟. Gotta have emojis.',
             print: {
                 blurb_quiz_header: '😄 Remember, this is PRACTICE!',
                 directionsMultipleChoice:
@@ -80,7 +80,7 @@ const Ben = {
 
                 les: {
                     name: 'les',
-                    blurb: 'Lower East Side—Aqua Best, WD-50 (back in the day), and CW Pencils (rip ☠️).',
+                    blurb: '<b>Lower East Side</b>—Aqua Best, WD-50 (back in the day), and ✏️ CW Pencils (rip ☠️).',
                     url: './img/themes/loisaida.jpg',
                 },
                 chinatown2: {
@@ -702,15 +702,14 @@ const Ben = {
         },
         getThemeStyles(th, thumbnail = false) {
             if (!this.theme) return ''
-            // Gradient color inflection points
-            let gradientColor =
-                theme === 'brooklyn' ? `255, 255, 255` : '0, 0, 0'
+            // Gradient color inflection points (black or white)
+            let gradientColor = th === 'brooklynd' ? `255, 255, 255` : '0, 0, 0'
             let gradient = [
                 `rgba(${gradientColor}, 0.15) 0%`,
                 `rgba(${gradientColor}, 0.95) 20%`,
-                `rgba(${gradientColor}, 0.95) 70%`,
-                `rgba(${gradientColor}, 0.25) 90%`,
-                `rgba(${gradientColor}, 0.15) 100%`,
+                `rgba(${gradientColor}, 0.95) 80%`,
+                `rgba(${gradientColor}, 0.60) 90%`,
+                `rgba(${gradientColor}, 0.25) 100%`,
             ]
 
             // Return a string
@@ -725,7 +724,8 @@ const Ben = {
                 ', '
             )})`
             if (thumbnail !== true) {
-                return `background-image: ${gradient_css}, url(${bg_img})`
+                // It's not a thumbnail
+                return `background-image: ${gradient_css}, url(${bg_img}) !important;`
             } else {
                 let borderColor = '#CCCCCC'
                 let opacity = `opacity: .5`
@@ -1116,7 +1116,7 @@ export default Ben
                     </div>
                     <!-- Branding -->
                     <div
-                        class="branding align-self-center"
+                        class="branding align-self-center border border-1 border-secondary"
                         style="font-weight: 500; font-size: 11px"
                     >
                         <!-- Version info -->
