@@ -1,37 +1,44 @@
 {
     "questions": [
         {
-            "source": "SHSAT 2020 Sample Test A",
-            "questionText": "For what value of \\(x\\) is the below equation true? $${x\\over 5} - 4 = 3(4 - 2x) - 1$$",
-            "tags": ["equations", "pemdas"],
+            "questionText": "A large bag contains 10 books. 7 are red and 3 are pink. If 2 books are selected at random from the sample, one at a time without replacement, what is the probability that both books are not pink?",
             "choices": [
-                "\\(75\\over 11\\)",
-                "\\(75\\over 31\\)",
-                "\\(15\\over 7\\)",
-                "\\(65\\over 31\\)"
+                "\\(46.7\\%\\)",
+                "\\(50\\%\\)",
+                "\\(74.6\\%\\)",
+                "\\(50.2\\%\\)"
             ],
-            "answer": "\\(75\\over 31\\)",
-            "hint": "There is something to be gained here.",
-            "explanation": "",
-            "description": "",
-            "difficulty": "2"
+            "answer": "\\(46.7\\%\\)",
+            "hint": "<code>Compound Probability</code> (of 2 or more things happening simultaneously) is the product of the individual probabilities. Example: the probability of event a AND b happening = the probability of event a x the probability of event b.",
+            "tags": ["probabilities"]
         },
         {
-            "difficulty": null,
-            "answer": "8",
-            "questionText": "When 368 is divided by 7, the remainder is $x$. What is the remainder when 368 is divided by \\(3x\\)?",
-            "choices": "[0, 3, 5, 8]",
-            "tags": ["tricky", "word_problem"],
-            "type": "CustomEntity01"
+            "questionText": "Kyle played 5 games of basketball and had a mean score of 73. Norene played 2 games and had a mean score of 97. What was the mean of the scores for all 7 of these games?",
+            "choices": ["79.86", "98.40", "86.76", "102.76"],
+            "answer": "79.86",
+            "hint": "A mean score of 73 for 5 games is the same as saying...<code>The total score for all 5 games is (73 x 5) = 365</code>.",
+            "tags": ["mean and median"]
         },
         {
-            "difficulty": null,
-            "hint": null,
-            "answer": "20",
-            "questionText": "The average (arithmetic mean) of 16 numbers is 3. The average of these 16 numbers and a seventeenth number is 4. What is the seventeenth number?",
-            "choices": "[12, 17, 18, 20]",
-            "tags": ["mean_median", "tricky"],
-            "type": "CustomEntity01"
+            "questionText": "Solve for \\(x\\): \\[{(2x \\times 10)\\over4} = 35\\]",
+            "choices": ["42", "34", "35", "62"],
+            "answer": "35",
+            "hint": "",
+            "tags": ["equations"]
+        },
+        {
+            "questionText": "A chair weighs 60 pounds. If another chair is <span class=\"hilight\">50% heavier</span>, how much does it weigh, approximately?",
+            "choices": ["90 pounds", "94 pounds", "30 lbs", "75 pounds"],
+            "answer": "90 pounds",
+            "hint": "<span class=\"hilight\">A 25% gain = </span> \\((1 + .25) \\times\\) <i>the initial value.</i> <span class=\"hilight\">A 25% loss = </span> \\((1 - .25) \\times\\) <i>the initial value</i> 🤔.",
+            "tags": ["percents"]
+        },
+        {
+            "questionText": "Mrs. Withers went to the market and spent a total of $14.70. She got 6 boxes of chips at a cost of $1.20 each, and 5 bags of figs. What was the <em>price per bag</em> of the figs?",
+            "choices": ["$1.69", "$1.50", "$1.96", "$2.01"],
+            "answer": "$1.50",
+            "hint": "",
+            "tags": ["word problem"]
         }
     ]
 }
