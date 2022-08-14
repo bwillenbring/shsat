@@ -55,7 +55,7 @@ const QuizViewer = {
             blurb_app: `For parents and kids to try out.`,
             blurb_ben: `A NYC dad with kids at Hunter college HS and Brooklyn Tech.`,
             blurb_version:
-                '5f006d2 - Updated 8/13/2022. Improvements to theming and printing. Better support for rendering math in tooltips. Streamlined about links, and more emojis...✏️ ☠️ 🥟. Gotta have emojis.',
+                '<b>b0717f1</b> - Updated 8/14/2022. Allow for quizzes to be loaded from an API endpoint that reads from a preconfigured S3 bucket. Miscellaneous clean up on component naming and logging.',
             print: {
                 blurb_quiz_header: '😄 Remember, this is PRACTICE!',
                 directionsMultipleChoice:
