@@ -392,25 +392,40 @@ const QuizViewer = {
                 (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
             )
         },
-        getQuestionsFromParams(param = 'quiz') {
+        getQuestionsFromParams() {
+            // Our querystring object
+            const p = new URLSearchParams(window.location.search)
+            // From the querystring, we're interested in 2 params
+            let quiz = p.get('quiz') || ''
+            let local = Boolean(p.get('local')) || false
+
+            // There are 3 scenarios we want to handle...
             try {
-                // This method parses the querystring
-                let jsonFile = new URLSearchParams(window.location.search).get(
-                    param
-                )
-                // It's being pulled from a remote url or locally
-                if (jsonFile.startsWith('http') || jsonFile.endsWith('.json')) {
-                    jsonFile = jsonFile
-                } else {
-                    jsonFile = `${jsonFile}.json`
+                // 1. It's being pulled locally
+                if (quiz.startsWith('./')) {
+                    // It really is local
+                    quiz = quiz.endsWith('.json') ? quiz : `${quiz}.json`
+                }
+                // 2. It should be pulled from an S3 bucket
+                else {
+                    quiz = `https://s91fisgxkd.execute-api.us-east-2.amazonaws.com/prod/?quiz=${quiz}`
                 }
 
-                return `${jsonFile}?t=${this.getTimestamp()}`
+                // Append the timestamp qs for cachebusting
+                if (quiz.includes('?')) {
+                    quiz = `${quiz}&t=${this.getTimestamp()}`
+                } else {
+                    quiz = `${quiz}?t=${this.getTimestamp()}`
+                }
             } catch (err) {
+                console.log('error...')
+                console.log(err)
                 return null
             }
 
-            return null
+            console.log(`quiz=${quiz}\nlocal=${local}`)
+
+            return quiz
         },
         forceArray(val) {
             if (Array.isArray(val)) return val
@@ -457,6 +472,8 @@ const QuizViewer = {
         },
         formatPrintChoices(choices) {
             const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+            // Account fo the empty choices
+            if (!choices || !Array.isArray(choices)) return ''
 
             let displayChoices = choices.map((ch) => {
                 let idx = choices.indexOf(ch)
@@ -537,10 +554,9 @@ const QuizViewer = {
                 let q_url = questionsAsParams
                     ? questionsAsParams
                     : this.questionsURL
-                q_url = `${q_url}?t=${new Date().getTime()}`
 
                 const sep = '❤️ '.repeat(25)
-                this.log('Loading questions...!')
+                this.log(`Loading questions... from ${q_url}!`)
 
                 try {
                     const r = await axios.get(`${q_url}`)
@@ -822,6 +838,7 @@ export default QuizViewer
 
                                     <!-- Choices -->
                                     <div
+                                        v-if="chocies && Array.isArray(choices)"
                                         data-role="choices"
                                         class="container-fluid"
                                     >
