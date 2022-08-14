@@ -1,5 +1,5 @@
 <script>
-const Ben = {
+const QuizViewer = {
     props: {
         initial_theme: {
             type: String,
@@ -498,13 +498,6 @@ const Ben = {
         getTimestamp() {
             return new Date().getTime()
         },
-        increment(arg = 1) {
-            this.count++
-        },
-        testMethod(p) {
-            // $('button[data-bs-slide-to="1"]').trigger('click');
-            alert('wow' + p)
-        },
         toggleQuestion(idx) {
             // Takes an index
             this.displayQuestion(idx)
@@ -790,10 +783,10 @@ const Ben = {
     },
 }
 
-export default Ben
+export default QuizViewer
 </script>
 
-<template ref="foo">
+<template>
     <!-- outer shell -->
     <div class="d-flex justify-content-center">
         <div

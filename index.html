@@ -55,6 +55,7 @@
                     vue: Vue,
                 },
                 async getFile(url) {
+                    console.log(`getFile(${url})`)
                     const res = await fetch(url)
                     if (!res.ok)
                         throw Object.assign(
@@ -119,11 +120,11 @@
 
             const app = Vue.createApp({
                 components: {
-                    shsat: Vue.defineAsyncComponent(() =>
-                        loadModule('./components/Ben.vue', options)
+                    'quiz-viewer': Vue.defineAsyncComponent(() =>
+                        loadModule('./components/QuizViewer.vue', options)
                     ),
                 },
-                template: `<shsat initial_theme="${theme}"></shsat>`,
+                template: `<quiz-viewer initial_theme="${theme}"></quiz-viewer>`,
             })
 
             app.mount('#app')
