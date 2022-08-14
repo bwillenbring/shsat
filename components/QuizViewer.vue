@@ -222,7 +222,6 @@ const QuizViewer = {
             if (a !== b && a !== null) {
                 let styles = this.getThemeStyles(a)
                 this.currentStyle = styles
-                console.log(`new value for theme = ${a}, old value=${b}`)
                 this.theme_is_set = true
             }
         },
@@ -272,10 +271,6 @@ const QuizViewer = {
                     THIS.renderMath(1, fn)
                 })
             })
-            $("[data-toggle='tooltip']").on('show.bs.tooltip', function () {
-                console.log('Tooltip will be visible now.')
-            })
-            console.log('setup hanlders!')
         },
         createPrintQuestionCopy(q) {
             return JSON.parse(JSON.stringify(q))
@@ -418,12 +413,8 @@ const QuizViewer = {
                     quiz = `${quiz}?t=${this.getTimestamp()}`
                 }
             } catch (err) {
-                console.log('error...')
-                console.log(err)
                 return null
             }
-
-            console.log(`quiz=${quiz}\nlocal=${local}`)
 
             return quiz
         },
@@ -524,7 +515,6 @@ const QuizViewer = {
             MathJax.typesetPromise().then((r) => {
                 console.log('Math rendered!')
                 if (typeof fn === 'function') {
-                    console.log('Doing callback...')
                     fn()
                 }
             })
@@ -556,7 +546,6 @@ const QuizViewer = {
                     : this.questionsURL
 
                 const sep = '❤️ '.repeat(25)
-                this.log(`Loading questions... from ${q_url}!`)
 
                 try {
                     const r = await axios.get(`${q_url}`)
@@ -703,7 +692,6 @@ const QuizViewer = {
             // Only do something if the current theme is not the theme, do nothing
             if (Object.keys(this.themes).includes(th)) {
                 this.theme = th
-                console.log(`SETTING THEME TO ${th}`)
             } else {
                 // Set the theme to the 1st theme
                 this.theme = this.defaultTheme
@@ -838,7 +826,7 @@ export default QuizViewer
 
                                     <!-- Choices -->
                                     <div
-                                        v-if="chocies && Array.isArray(choices)"
+                                        v-if="choices && Array.isArray(choices)"
                                         data-role="choices"
                                         class="container-fluid"
                                     >

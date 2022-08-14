@@ -55,7 +55,6 @@
                     vue: Vue,
                 },
                 async getFile(url) {
-                    console.log(`getFile(${url})`)
                     const res = await fetch(url)
                     if (!res.ok)
                         throw Object.assign(
