@@ -234,6 +234,8 @@ const QuizViewer = {
             if (a && Array.isArray(a) && a.length > 0) {
                 this.loaded = true
                 this.unanswered = this.questions.length
+                // Always call setuphandlers
+                setTimeout(this.setupHandlers(), 1000)
             } else {
                 this.loaded = false
             }
@@ -254,26 +256,72 @@ const QuizViewer = {
         },
     },
     methods: {
-        setupHandlers() {
-            let navs = $(
-                '[data-role="circleContainer"][data-bs-toggle="tooltip"]'
-            )
-            // Add reference to this
-            const THIS = this
-            // Attach an event listener to each circle container (nav) element
-            navs.each(function () {
-                let ths = $(this).get(0)
+        calculateScore() {
+            let right = this.questions.filter(
+                (item) => item.isCorrect == true
+            ).length
 
-                ths.addEventListener('shown.bs.tooltip', function () {
-                    const fn = function () {
-                        $('.tooltip .menu-equation').css('opacity', 1)
-                    }
-                    THIS.renderMath(1, fn)
-                })
-            })
+            let wrong = this.questions.filter(
+                (item) => item.isCorrect == false
+            ).length
+
+            this.wrong = wrong
+            this.right = right
         },
         createPrintQuestionCopy(q) {
             return JSON.parse(JSON.stringify(q))
+        },
+        detectOrientation() {
+            // Detect and set orientation
+            let o
+            try {
+                o =
+                    (screen.orientation || {}).type ||
+                    screen.mozOrientation ||
+                    screen.msOrientation
+            } catch (err) {
+                o = ''
+            }
+
+            o = undefined === o ? '' : o
+
+            this.orientation = o
+
+            // Detect and set isMobile, width, and height vars
+            let r = new RegExp(
+                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+            )
+            // Set values
+            this.isMobile = r.test(navigator.userAgent)
+            this.w = window.outerWidth
+            this.h = window.outerHeight
+            console.log(
+                `w=${this.w}, h = ${this.h}, isMobile=${this.isMobile}, orientation=${this.orientation}`
+            )
+            return true
+        },
+        displayQuestion(idx) {
+            if (idx >= 0 && idx < this.questions.length) {
+                // This fades stuff OUT, then IN
+                this.fade(idx)
+            }
+        },
+        enableTooltips() {
+            // Code here
+            const tooltipTriggerList = document.querySelectorAll(
+                '[data-bs-toggle="tooltip"]'
+            )
+            const tooltipList = [...tooltipTriggerList].map(
+                (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
+            )
+        },
+        factorsOf(num) {
+            // Return an array of factors
+            let factors = []
+            for (let i = num; i > 1; i--) {
+                if (num % i === 0) factors.push(i)
+            }
+            return factors
         },
         fade(idx = 0) {
             let {
@@ -322,102 +370,6 @@ const QuizViewer = {
                 })
             })
         },
-        detectOrientation() {
-            // Detect and set orientation
-            let o
-            try {
-                o =
-                    (screen.orientation || {}).type ||
-                    screen.mozOrientation ||
-                    screen.msOrientation
-            } catch (err) {
-                o = ''
-            }
-
-            o = undefined === o ? '' : o
-
-            this.orientation = o
-
-            // Detect and set isMobile, width, and height vars
-            let r = new RegExp(
-                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
-            )
-            // Set values
-            this.isMobile = r.test(navigator.userAgent)
-            this.w = window.outerWidth
-            this.h = window.outerHeight
-            console.log(
-                `w=${this.w}, h = ${this.h}, isMobile=${this.isMobile}, orientation=${this.orientation}`
-            )
-            return true
-        },
-        getBlurb(b) {
-            switch (b) {
-                case 'about':
-                    return {
-                        link: 'https://www.ben-willenbring.com/shsat-back-story',
-                        html: `${this.blurb_about} Click to learn more.`,
-                    }
-                    break
-                case 'ben':
-                case 'author':
-                    // about me
-                    return {
-                        link: 'https://www.ben-willenbring.com/about',
-                        html: `${this.blurb_ben} Click to learn more.`,
-                    }
-                    break
-
-                case 'app':
-                case 'demo':
-                    // app
-                    return {
-                        link: 'https://www.ben-willenbring.com/shsat-back-story',
-                        html: `${this.blurb_app} Click to learn more.`,
-                    }
-                    break
-            }
-        },
-        enableTooltips() {
-            // Code here
-            const tooltipTriggerList = document.querySelectorAll(
-                '[data-bs-toggle="tooltip"]'
-            )
-            const tooltipList = [...tooltipTriggerList].map(
-                (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
-            )
-        },
-        getQuestionsFromParams() {
-            // Our querystring object
-            const p = new URLSearchParams(window.location.search)
-            // From the querystring, we're interested in 2 params
-            let quiz = p.get('quiz') || ''
-            let local = Boolean(p.get('local')) || false
-
-            // There are 3 scenarios we want to handle...
-            try {
-                // 1. It's being pulled locally
-                if (quiz.startsWith('./')) {
-                    // It really is local
-                    quiz = quiz.endsWith('.json') ? quiz : `${quiz}.json`
-                }
-                // 2. It should be pulled from an S3 bucket
-                else {
-                    quiz = `https://s91fisgxkd.execute-api.us-east-2.amazonaws.com/prod/?quiz=${quiz}`
-                }
-
-                // Append the timestamp qs for cachebusting
-                if (quiz.includes('?')) {
-                    quiz = `${quiz}&t=${this.getTimestamp()}`
-                } else {
-                    quiz = `${quiz}?t=${this.getTimestamp()}`
-                }
-            } catch (err) {
-                return null
-            }
-
-            return quiz
-        },
         forceArray(val) {
             if (Array.isArray(val)) return val
 
@@ -461,6 +413,14 @@ const QuizViewer = {
                 return ''
             }
         },
+        formatMath(expr) {
+            // This function takes a string like '\\(x=5\\)' and returns mathml
+            if (typeof MathJax !== 'object') return expr
+            // One of these...
+            let l = MathJax.tex2chtml(expr).outerHTML
+            // let l = MathJax.tex2mml(expr)
+            return l
+        },
         formatPrintChoices(choices) {
             const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
             // Account fo the empty choices
@@ -503,145 +463,48 @@ const QuizViewer = {
             }
             return ''
         },
-        getTimestamp() {
-            return new Date().getTime()
-        },
-        toggleQuestion(idx) {
-            // Takes an index
-            this.displayQuestion(idx)
-        },
-        renderMath(attempts = 1, fn = null) {
-            attempts++
-            MathJax.typesetPromise().then((r) => {
-                console.log('Math rendered!')
-                if (typeof fn === 'function') {
-                    fn()
-                }
-            })
-        },
-        displayQuestion(idx) {
-            if (idx >= 0 && idx < this.questions.length) {
-                // This fades stuff OUT, then IN
-                this.fade(idx)
+        gcf(a, b) {
+            // First get factors of a
+            let facs_a = factorsOf(a)
+            let facs_b = factorsOf(b)
+            // Which members do they have in common
+            let commonFactors = _.intersection(facs_a, facs_b)
+            commonFactors.sort()
+            let gcf = null
+            if (commonFactors.length > 0) {
+                gcf = commonFactors[commonFactors.length - 1]
+            }
+
+            return {
+                commonFactors: commonFactors,
+                gcf: gcf,
             }
         },
-        async loadQuestions() {
-            /**
-             * 3 Scenarios
-             *    1. questions are passed as params. Example...
-             *      {base url}?questions=questions=[{"questionText": "Ben"}]
-             *
-             *    2. questions are passed in as a string via props...
-             *      let q = JSON.stringify([{"questionText": "Ben"}])
-             *      template: `<shsat questionsArray='${q}'></shsat>`
-             *
-             *    3. questions are passed in as a string to an URL
-             *      template: `<shsat questionsURL='${questionsURL}'></shsat>`
-             */
-            let questionsAsParams = this.getQuestionsFromParams()
-            if (this.questionsURL || questionsAsParams) {
-                // Favor querystring
-                let q_url = questionsAsParams
-                    ? questionsAsParams
-                    : this.questionsURL
-
-                const sep = '❤️ '.repeat(25)
-
-                try {
-                    const r = await axios.get(`${q_url}`)
-
-                    // Questions are presumed to be... { "questions": [ ... an array of questions... ] }
-                    const questions =
-                        r.data && r.data.questions ? r.data.questions : []
-
-                    if (questions && questions.length > 0) {
-                        this.setQuestions(questions)
+        getBlurb(b) {
+            switch (b) {
+                case 'about':
+                    return {
+                        link: 'https://www.ben-willenbring.com/shsat-back-story',
+                        html: `${this.blurb_about} Click to learn more.`,
                     }
-                } catch (err) {
-                    this.log(err)
-                }
-            } else if (this.questionsArray) {
-                // questionsArray is a prop passed in as a stringified Array of questions
-                let questionsArray =
-                    typeof this.questionsArray === 'string'
-                        ? eval(this.questionsArray)
-                        : this.questionsArray
+                    break
+                case 'ben':
+                case 'author':
+                    // about me
+                    return {
+                        link: 'https://www.ben-willenbring.com/about',
+                        html: `${this.blurb_ben} Click to learn more.`,
+                    }
+                    break
 
-                this.setQuestions(questionsArray)
-            } else {
-                this.log(`😢 Using default questions!`)
-                // Use the default questions
-                let d = JSON.parse(JSON.stringify(this.defaultQuestions))
-                this.setQuestions(d)
-            }
-        },
-        log(msg) {
-            let sep = '❤️ '.repeat(25)
-            console.log(sep)
-            console.log(msg)
-            console.log(sep)
-        },
-        setQuestions(q = []) {
-            // This sets the questions based on the axios request's response
-            if (q && Array.isArray(q) && q.length > 0) {
-                // Set the component questions correctly
-                this.questions = q.map((item) => {
-                    // Give one more prop
-                    item.idx = q.indexOf(item)
-                    item.values = this.forceArray(item.choices)
-                    // This stores what the user selects
-                    item.userChoice = null
-                    item.status = 'unanswered'
-                    item.isCorrect = null
-                    return item
-                })
-            }
-        },
-        insertDependency({
-            type = 'text/javascript',
-            src = '',
-            id = '',
-            fn = null,
-        } = {}) {
-            // Two allowed types
-            const allowedTypes = ['text/javascript', 'text/css']
-            // Initialize script and tag
-            let [script, tag] = [null, 'script']
-
-            if (
-                !src &&
-                type.includes('javascript') &&
-                fn &&
-                typeof fn === 'object'
-            ) {
-                fn()
-            } else if (
-                src &&
-                src.startsWith('http') &&
-                allowedTypes.includes(type)
-            ) {
-                if (!type.includes('javascript')) {
-                    tag = 'link'
-                }
-                script = document.createElement(tag)
-                if (id) script.id = id
-
-                if (type.includes('javascript')) {
-                    // js
-                    script.type = type
-                    script.async = true
-                    script.src = src
-                } else {
-                    // css
-                    script.rel = 'stylesheet'
-                    script.crossorigin = 'anonymous'
-                    script.href = src
-                }
-                // Inject into dom and conditionally execute a callback
-                document.getElementsByTagName('head')[0].appendChild(script)
-                if (fn && typeof fn === 'function') {
-                    script.onload = () => fn()
-                }
+                case 'app':
+                case 'demo':
+                    // app
+                    return {
+                        link: 'https://www.ben-willenbring.com/shsat-back-story',
+                        html: `${this.blurb_app} Click to learn more.`,
+                    }
+                    break
             }
         },
         getCircleClass(idx = 0) {
@@ -650,86 +513,6 @@ const QuizViewer = {
                 return 'small badge rounded-pill text-bg-success selected'
             } else {
                 return 'small badge rounded-pill text-bg-secondary'
-            }
-        },
-        selectChoice(userChoice) {
-            console.log(`User is selecting ${userChoice}`)
-            // What's the currentQuestion
-            let q = this.currentQuestion
-            // Persist the user's selection for the current question
-            this.setSelectionForQuestion(q.idx, userChoice)
-            let { choices, answer, idx } = q
-
-            this.currentQuestion.isCorrect =
-                String(userChoice) == String(answer) ? true : false
-
-            this.calculateScore()
-        },
-        calculateScore() {
-            let right = this.questions.filter(
-                (item) => item.isCorrect == true
-            ).length
-
-            let wrong = this.questions.filter(
-                (item) => item.isCorrect == false
-            ).length
-
-            this.wrong = wrong
-            this.right = right
-        },
-        setSelectionForQuestion(idx, userChoice) {
-            this.questions[idx].userChoice = userChoice
-            this.questions[idx].status = 'answered'
-        },
-        getSelectionForQuestion(idx) {
-            try {
-                return this.questions[idx].userChoice || null
-            } catch (err) {
-                return null
-            }
-        },
-        setTheme(th) {
-            // Only do something if the current theme is not the theme, do nothing
-            if (Object.keys(this.themes).includes(th)) {
-                this.theme = th
-            } else {
-                // Set the theme to the 1st theme
-                this.theme = this.defaultTheme
-            }
-        },
-        getThemeStyles(th, thumbnail = false) {
-            if (!this.theme) return ''
-            // Gradient color inflection points (black or white)
-            let gradientColor = th === 'brooklynd' ? `255, 255, 255` : '0, 0, 0'
-            let gradient = [
-                `rgba(${gradientColor}, 0.15) 0%`,
-                `rgba(${gradientColor}, 0.95) 20%`,
-                `rgba(${gradientColor}, 0.95) 80%`,
-                `rgba(${gradientColor}, 0.60) 90%`,
-                `rgba(${gradientColor}, 0.25) 100%`,
-            ]
-
-            // Return a string
-            let available_themes = Object.keys(this.themes)
-            if (!th || !available_themes.includes(th)) {
-                th = 'brooklyn'
-            }
-
-            let bg_img = this.themes[th].url ? this.themes[th].url : ''
-            bg_img += `?ts=${this.initialTimestamp}`
-            let gradient_css = `linear-gradient(to bottom, ${gradient.join(
-                ', '
-            )})`
-            if (thumbnail !== true) {
-                // It's not a thumbnail
-                return `background-image: ${gradient_css}, url(${bg_img}) !important;`
-            } else {
-                let borderColor = '#CCCCCC'
-                let opacity = `opacity: .5`
-                if (th === this.theme) {
-                    opacity = `opacity: 1`
-                }
-                return `border-color: ${borderColor}; ${opacity}; height:60px; background-image: url(${bg_img});`
             }
         },
         getClassFor({ el = null, params = {} } = {}) {
@@ -783,6 +566,268 @@ const QuizViewer = {
                 default:
                     break
             }
+        },
+        getQuestionsFromParams() {
+            // Our querystring object
+            const p = new URLSearchParams(window.location.search)
+            // From the querystring, we're interested in 2 params
+            let quiz = p.get('quiz') || null
+            let local = Boolean(p.get('local')) || false
+
+            // There are 3 scenarios we want to handle...
+            try {
+                // There is no quiz parameter
+                if (!quiz) return null
+                // 1. It's being pulled locally
+                if (quiz.startsWith('./')) {
+                    // It really is local
+                    quiz = quiz.endsWith('.json') ? quiz : `${quiz}.json`
+                }
+                // 2. It should be pulled from an S3 bucket
+                else {
+                    quiz = `https://s91fisgxkd.execute-api.us-east-2.amazonaws.com/prod/?quiz=${quiz}`
+                }
+
+                // Append the timestamp qs for cachebusting
+                if (quiz.includes('?')) {
+                    quiz = `${quiz}&t=${this.getTimestamp()}`
+                } else {
+                    quiz = `${quiz}?t=${this.getTimestamp()}`
+                }
+            } catch (err) {
+                return null
+            }
+
+            return quiz
+        },
+        getSelectionForQuestion(idx) {
+            try {
+                return this.questions[idx].userChoice || null
+            } catch (err) {
+                return null
+            }
+        },
+        getThemeStyles(th, thumbnail = false) {
+            if (!this.theme) return ''
+            // Gradient color inflection points (black or white)
+            let gradientColor = th === 'brooklynd' ? `255, 255, 255` : '0, 0, 0'
+            let gradient = [
+                `rgba(${gradientColor}, 0.15) 0%`,
+                `rgba(${gradientColor}, 0.95) 20%`,
+                `rgba(${gradientColor}, 0.95) 80%`,
+                `rgba(${gradientColor}, 0.60) 90%`,
+                `rgba(${gradientColor}, 0.25) 100%`,
+            ]
+
+            // Return a string
+            let available_themes = Object.keys(this.themes)
+            if (!th || !available_themes.includes(th)) {
+                th = 'brooklyn'
+            }
+
+            let bg_img = this.themes[th].url ? this.themes[th].url : ''
+            bg_img += `?ts=${this.initialTimestamp}`
+            let gradient_css = `linear-gradient(to bottom, ${gradient.join(
+                ', '
+            )})`
+            if (thumbnail !== true) {
+                // It's not a thumbnail
+                return `background-image: ${gradient_css}, url(${bg_img}) !important;`
+            } else {
+                let borderColor = '#CCCCCC'
+                let opacity = `opacity: .5`
+                if (th === this.theme) {
+                    opacity = `opacity: 1`
+                }
+                return `border-color: ${borderColor}; ${opacity}; height:60px; background-image: url(${bg_img});`
+            }
+        },
+        getTimestamp() {
+            return new Date().getTime()
+        },
+        insertDependency({
+            type = 'text/javascript',
+            src = '',
+            id = '',
+            fn = null,
+        } = {}) {
+            // Two allowed types
+            const allowedTypes = ['text/javascript', 'text/css']
+            // Initialize script and tag
+            let [script, tag] = [null, 'script']
+
+            if (
+                !src &&
+                type.includes('javascript') &&
+                fn &&
+                typeof fn === 'object'
+            ) {
+                fn()
+            } else if (
+                src &&
+                src.startsWith('http') &&
+                allowedTypes.includes(type)
+            ) {
+                if (!type.includes('javascript')) {
+                    tag = 'link'
+                }
+                script = document.createElement(tag)
+                if (id) script.id = id
+
+                if (type.includes('javascript')) {
+                    // js
+                    script.type = type
+                    script.async = true
+                    script.src = src
+                } else {
+                    // css
+                    script.rel = 'stylesheet'
+                    script.crossorigin = 'anonymous'
+                    script.href = src
+                }
+                // Inject into dom and conditionally execute a callback
+                document.getElementsByTagName('head')[0].appendChild(script)
+                if (fn && typeof fn === 'function') {
+                    script.onload = () => fn()
+                }
+            }
+        },
+        async loadQuestions() {
+            /**
+             * 3 Scenarios
+             *    1. questions are passed as params. Example...
+             *      {base url}?questions=questions=[{"questionText": "Ben"}]
+             *
+             *    2. questions are passed in as a string via props...
+             *      let q = JSON.stringify([{"questionText": "Ben"}])
+             *      template: `<shsat questionsArray='${q}'></shsat>`
+             *
+             *    3. questions are passed in as a string to an URL
+             *      template: `<shsat questionsURL='${questionsURL}'></shsat>`
+             */
+            let questionsAsParams = this.getQuestionsFromParams()
+
+            if (!questionsAsParams) {
+                this.log(`😢 Using default questions!`)
+                // Use the default questions
+                let d = JSON.parse(JSON.stringify(this.defaultQuestions))
+                this.setQuestions(d)
+            } else if (this.questionsURL || questionsAsParams) {
+                // Favor querystring
+                let q_url = questionsAsParams
+                    ? questionsAsParams
+                    : this.questionsURL
+
+                const sep = '❤️ '.repeat(25)
+
+                console.log(`q_url=${q_url}`)
+
+                try {
+                    const r = await axios.get(`${q_url}`)
+
+                    // Questions are presumed to be... { "questions": [ ... an array of questions... ] }
+                    const questions =
+                        r.data && r.data.questions ? r.data.questions : []
+
+                    if (questions && questions.length > 0) {
+                        this.setQuestions(questions)
+                    }
+                } catch (err) {
+                    this.log(err)
+                }
+            } else if (this.questionsArray) {
+                // questionsArray is a prop passed in as a stringified Array of questions
+                let questionsArray =
+                    typeof this.questionsArray === 'string'
+                        ? eval(this.questionsArray)
+                        : this.questionsArray
+
+                this.setQuestions(questionsArray)
+            } else {
+                this.log(`😢 Using default questions!`)
+                // Use the default questions
+                let d = JSON.parse(JSON.stringify(this.defaultQuestions))
+                this.setQuestions(d)
+            }
+        },
+        log(msg) {
+            let sep = '❤️ '.repeat(25)
+            console.log(sep)
+            console.log(msg)
+            console.log(sep)
+        },
+        renderMath(attempts = 1, fn = null) {
+            attempts++
+            MathJax.typesetPromise().then((r) => {
+                console.log('Math rendered!')
+                if (typeof fn === 'function') {
+                    fn()
+                }
+            })
+        },
+        setupHandlers() {
+            let navs = $(
+                '[data-role="circleContainer"][data-bs-toggle="tooltip"]'
+            )
+            // Add reference to this
+            const THIS = this
+            // Attach an event listener to each circle container (nav) element
+            navs.each(function () {
+                let ths = $(this).get(0)
+
+                ths.addEventListener('shown.bs.tooltip', function () {
+                    const fn = function () {
+                        $('.tooltip .menu-equation').css('opacity', 1)
+                    }
+                    THIS.renderMath(1, fn)
+                })
+            })
+        },
+        setQuestions(q = []) {
+            // This sets the questions based on the axios request's response
+            if (q && Array.isArray(q) && q.length > 0) {
+                // Set the component questions correctly
+                this.questions = q.map((item) => {
+                    // Give one more prop
+                    item.idx = q.indexOf(item)
+                    item.values = this.forceArray(item.choices)
+                    // This stores what the user selects
+                    item.userChoice = null
+                    item.status = 'unanswered'
+                    item.isCorrect = null
+                    return item
+                })
+            }
+        },
+        selectChoice(userChoice) {
+            console.log(`User is selecting ${userChoice}`)
+            // What's the currentQuestion
+            let q = this.currentQuestion
+            // Persist the user's selection for the current question
+            this.setSelectionForQuestion(q.idx, userChoice)
+            let { choices, answer, idx } = q
+
+            this.currentQuestion.isCorrect =
+                String(userChoice) == String(answer) ? true : false
+
+            this.calculateScore()
+        },
+        setSelectionForQuestion(idx, userChoice) {
+            this.questions[idx].userChoice = userChoice
+            this.questions[idx].status = 'answered'
+        },
+        setTheme(th) {
+            // Only do something if the current theme is not the theme, do nothing
+            if (Object.keys(this.themes).includes(th)) {
+                this.theme = th
+            } else {
+                // Set the theme to the 1st theme
+                this.theme = this.defaultTheme
+            }
+        },
+        toggleQuestion(idx) {
+            // Takes an index
+            this.displayQuestion(idx)
         },
     },
 }
