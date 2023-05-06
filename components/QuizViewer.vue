@@ -54,8 +54,7 @@ const QuizViewer = {
             blurb_about: `SHSAT prep—for parents and kids to try out. Made by a NYC dad.`,
             blurb_app: `For parents and kids to try out.`,
             blurb_ben: `A NYC dad with kids at Hunter college HS and Brooklyn Tech.`,
-            blurb_version:
-                '<b>b0717f1</b> - Updated 8/14/2022. Allow for quizzes to be loaded from an API endpoint that reads from a preconfigured S3 bucket. Miscellaneous clean up on component naming and logging.',
+            blurb_version: '<b>Updated 5/5/2023</b> — Change out favicon.',
             print: {
                 blurb_quiz_header: '😄 Remember, this is PRACTICE!',
                 directionsMultipleChoice:
